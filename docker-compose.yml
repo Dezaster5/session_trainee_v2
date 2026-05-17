@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-exam_prep}
+      POSTGRES_USER: ${POSTGRES_USER:-exam_prep}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-exam_prep}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-exam_prep} -d ${POSTGRES_DB:-exam_prep}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      DEBUG: ${DEBUG:-1}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+      POSTGRES_DB: ${POSTGRES_DB:-exam_prep}
+      POSTGRES_USER: ${POSTGRES_USER:-exam_prep}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-exam_prep}
+      DB_HOST: db
+      DB_PORT: 5432
+      BASE_QUESTIONS_DIR: /base
+      TIME_ZONE: ${TIME_ZONE:-Asia/Qyzylorda}
+    volumes:
+      - ./backend:/app
+      - ./base:/base:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3"
+
+  frontend:
+    build:
+      context: ./frontend
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000/api}
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
+  frontend_node_modules:
