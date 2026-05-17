@@ -77,6 +77,12 @@ Run import:
 docker compose run --rm backend python manage.py import_questions
 ```
 
+On Render, if Shell is not available, set this backend environment variable and redeploy:
+
+```env
+AUTO_IMPORT_QUESTIONS=1
+```
+
 Dry run:
 
 ```bash

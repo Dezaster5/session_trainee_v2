@@ -25,6 +25,8 @@ services:
         sync: false
       - key: BASE_QUESTIONS_DIR
         value: /opt/render/project/src/base
+      - key: AUTO_IMPORT_QUESTIONS
+        value: "0"
       - key: TIME_ZONE
         value: Asia/Almaty
       - key: DB_SSL_REQUIRE

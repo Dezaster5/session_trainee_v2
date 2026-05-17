@@ -87,6 +87,21 @@ python manage.py import_questions
 
 Expected output should show imported and duplicate counts. If you already imported locally, production still needs its own import because Neon is a separate database.
 
+If Render Shell is not available, use automatic import:
+
+1. Open the backend service in Render.
+2. Go to Environment.
+3. Set:
+
+```text
+AUTO_IMPORT_QUESTIONS=1
+```
+
+4. Redeploy the backend.
+5. After successful deploy, you can either keep it enabled or set it back to `0`.
+
+Repeated imports are safe: existing questions are detected by hash and skipped as duplicates.
+
 ## 6. Vercel Frontend
 
 1. Import the same GitHub repository into Vercel.
