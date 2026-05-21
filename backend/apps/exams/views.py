@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.conf import settings
-from django.db.models import Avg, Count, F, Q, Sum
+from django.db.models import Case, Count, ExpressionWrapper, F, FloatField, Q, Sum, Value, When
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, permissions, status
@@ -386,13 +386,13 @@ class LeaderboardView(APIView):
         base_rows = UserSubjectStats.objects.all()
         if leaderboard_type == "live_coding":
             base_rows = base_rows.filter(live_coding_attempts__gt=0)
-            ordering = ["-live_coding_solved", "-average_live_coding_similarity", "-points", "user__username"]
+            ordering = ["-live_solved", "-live_avg_similarity", "-points", "user__username"]
         elif leaderboard_type == "theory":
             base_rows = base_rows.filter(total_answered__gt=0)
             ordering = ["-points", "-unique_questions_seen", "-correct_answers", "user__username"]
         else:
             base_rows = base_rows.filter(Q(total_answered__gt=0) | Q(live_coding_attempts__gt=0))
-            ordering = ["-points", "-unique_questions_seen", "-live_coding_solved", "user__username"]
+            ordering = ["-points", "-unique_questions_seen", "-live_solved", "user__username"]
 
         rows = (
             base_rows
@@ -402,12 +402,24 @@ class LeaderboardView(APIView):
                 total_answered=Sum("total_answered"),
                 correct_answers=Sum("correct_answers"),
                 unique_questions_seen=Sum("unique_questions_seen"),
-                live_coding_attempts=Sum("live_coding_attempts"),
-                live_coding_solved=Sum("live_coding_solved"),
-                average_live_coding_similarity=Avg(
-                    "average_live_coding_similarity",
-                    filter=Q(live_coding_attempts__gt=0),
+                live_attempts=Sum("live_coding_attempts"),
+                live_solved=Sum("live_coding_solved"),
+                live_similarity_weighted=Sum(
+                    F("average_live_coding_similarity") * F("live_coding_attempts"),
                 ),
+            )
+            .annotate(
+                live_avg_similarity=Case(
+                    When(
+                        live_attempts__gt=0,
+                        then=ExpressionWrapper(
+                            F("live_similarity_weighted") / F("live_attempts"),
+                            output_field=FloatField(),
+                        ),
+                    ),
+                    default=Value(0.0),
+                    output_field=FloatField(),
+                )
             )
             .order_by(*ordering)[:100]
         )
@@ -423,9 +435,9 @@ class LeaderboardView(APIView):
                     "total_answered": total,
                     "winrate": round(correct * 100 / total, 2) if total else 0,
                     "unique_questions_seen": row["unique_questions_seen"] or 0,
-                    "live_coding_attempts": row["live_coding_attempts"] or 0,
-                    "live_coding_solved": row["live_coding_solved"] or 0,
-                    "average_live_coding_similarity": round(row["average_live_coding_similarity"] or 0, 2),
+                    "live_coding_attempts": row["live_attempts"] or 0,
+                    "live_coding_solved": row["live_solved"] or 0,
+                    "average_live_coding_similarity": round(row["live_avg_similarity"] or 0, 2),
                     "subject_id": None,
                 }
             )

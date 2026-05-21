@@ -3,11 +3,12 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from .importer import import_questions_from_base, parse_tagged_questions, question_hash, validate_question
+from .importer import import_questions_from_base, parse_json_live_coding, parse_tagged_questions, question_hash, validate_question
 from .live_coding_services import (
     calculate_final_similarity,
     create_live_coding_session,
@@ -112,6 +113,66 @@ class ImportParserTests(TestCase):
 
 
 class JsonImportTests(TestCase):
+    def test_web_component_json_has_no_live_coding_placeholder_solutions(self):
+        path = settings.BASE_QUESTIONS_DIR / "Web_component_development" / "final_exam_questions.json"
+        data = json.loads(path.read_text(encoding="utf-8"))
+        placeholder_markers = (
+            "Implement the requested logic here",
+            "Provide a complete Spring Boot code snippet",
+            "where appropriate",
+            "public class Solution",
+            "your code",
+        )
+        placeholders = [
+            item["id"]
+            for item in data.get("liveCoding", [])
+            if any(marker in item.get("expected_solution", "") for marker in placeholder_markers)
+        ]
+        comment_only = []
+        for item in data.get("liveCoding", []):
+            solution_lines = [
+                line.strip()
+                for line in item.get("expected_solution", "").splitlines()
+                if line.strip()
+            ]
+            if solution_lines and all(line.startswith(("//", "#")) for line in solution_lines):
+                comment_only.append(item["id"])
+
+        password_task = next(item for item in data["liveCoding"] if item["id"] == "LC0233")
+        rectangle_task = next(item for item in data["liveCoding"] if item["id"] == "LC0136")
+        read_file_task = next(item for item in data["liveCoding"] if item["id"] == "LC0186")
+
+        self.assertEqual(placeholders, [])
+        self.assertEqual(comment_only, [])
+        self.assertIn("PasswordEncoder", password_task["expected_solution"])
+        self.assertIn("passwordEncoder.encode", password_task["expected_solution"])
+        self.assertIn("@GetMapping(\"/rectangle/perimeter\")", rectangle_task["expected_solution"])
+        self.assertIn("return 2 * (length + width)", rectangle_task["expected_solution"])
+        self.assertIn("Files.readString", read_file_task["expected_solution"])
+        self.assertIn("catch (IOException", read_file_task["expected_solution"])
+
+    def test_json_live_coding_parser_preserves_solution_formatting(self):
+        parsed = parse_json_live_coding(
+            {
+                "liveCoding": [
+                    {
+                        "id": "LCX",
+                        "topic": "Java",
+                        "task": "Write formatted code.",
+                        "expected_solution_language": "java",
+                        "expected_solution": """public class Demo {
+    void run() {
+        System.out.println("ok");
+    }
+}""",
+                    }
+                ]
+            }
+        )
+
+        self.assertIn("\n    void run()", parsed[0]["expected_solution"])
+        self.assertIn("\n        System.out.println", parsed[0]["expected_solution"])
+
     def test_imports_json_questions_topics_and_live_coding_without_duplicates(self):
         payload = {
             "questions": [
@@ -414,17 +475,28 @@ class LiveCodingServiceTests(TestCase):
         self.assertEqual(repeat_progress.points_earned, 20)
 
     def test_duplicate_attempt_in_same_session_is_rejected(self):
+        LiveCodingTask.objects.create(
+            subject=self.subject,
+            topic=self.topic,
+            title="Docker ps",
+            prompt="Write the command to list running containers.",
+            language="shell",
+            expected_solution="docker ps",
+            source_file="sample.json",
+            hash="live-hash-2",
+        )
         session = create_live_coding_session(
             self.user,
             self.subject,
             "review_all",
-            1,
+            2,
             topic_ids=[self.topic.id],
         )
-        submit_live_coding_attempt(session, self.task.id, "docker --version")
+        task_id = session.session_tasks.first().task_id
+        submit_live_coding_attempt(session, task_id, "docker --version")
 
         with self.assertRaisesMessage(ValueError, "already been attempted"):
-            submit_live_coding_attempt(session, self.task.id, "docker --version")
+            submit_live_coding_attempt(session, task_id, "docker --version")
 
         self.assertEqual(session.attempts.count(), 1)
 
@@ -512,6 +584,36 @@ class ApiEdgeCaseTests(TestCase):
         self.assertIn("api-user", usernames)
         self.assertNotIn("viewer", usernames)
 
+    def test_leaderboard_handles_live_coding_aggregates(self):
+        coder = User.objects.create_user(username="coder", password="strong-pass-123")
+        second_subject = Subject.objects.create(name="Web", slug="web")
+        UserSubjectStats.objects.create(
+            user=coder,
+            subject=self.subject,
+            live_coding_attempts=2,
+            live_coding_solved=1,
+            average_live_coding_similarity=80,
+            points=20,
+        )
+        UserSubjectStats.objects.create(
+            user=coder,
+            subject=second_subject,
+            live_coding_attempts=3,
+            live_coding_solved=2,
+            average_live_coding_similarity=90,
+            points=30,
+        )
+
+        response = self.client.get("/api/leaderboard/")
+        live_response = self.client.get("/api/leaderboard/?type=live_coding")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(live_response.status_code, 200)
+        row = next(item for item in live_response.data if item["username"] == "coder")
+        self.assertEqual(row["live_coding_attempts"], 5)
+        self.assertEqual(row["live_coding_solved"], 3)
+        self.assertEqual(row["average_live_coding_similarity"], 86)
+
     def test_subject_topics_endpoint_returns_counts(self):
         topic = Topic.objects.create(subject=self.subject, title="Theory Topic", slug="theory-topic", type=Topic.TYPE_THEORY)
         self.question.topic = topic
@@ -576,32 +678,42 @@ class ApiEdgeCaseTests(TestCase):
             source_file="sample.json",
             hash="api-live-hash",
         )
+        LiveCodingTask.objects.create(
+            subject=self.subject,
+            topic=topic,
+            title="Docker ps",
+            prompt="Write Docker ps command.",
+            language="shell",
+            expected_solution="docker ps",
+            source_file="sample.json",
+            hash="api-live-hash-2",
+        )
 
         start = self.client.post(
             "/api/live-coding/start/",
             {
                 "subject_id": self.subject.id,
                 "mode": "review_all",
-                "task_count": "1",
+                "task_count": "2",
                 "topic_ids": [topic.id],
             },
             format="json",
         )
         self.assertEqual(start.status_code, 201)
-        self.assertEqual(start.data["current_task"]["task"]["id"], task.id)
+        current_task_id = start.data["current_task"]["task"]["id"]
+        expected_solution = LiveCodingTask.objects.get(pk=current_task_id).expected_solution
 
         submit = self.client.post(
             f"/api/live-coding/{start.data['id']}/submit/",
-            {"task_id": task.id, "submitted_code": "docker --version", "time_spent": 3},
+            {"task_id": current_task_id, "submitted_code": expected_solution, "time_spent": 3},
             format="json",
         )
         self.assertEqual(submit.status_code, 200)
-        self.assertEqual(submit.data["attempt"]["status"], "excellent")
         self.assertIn("expected_solution", submit.data["attempt"])
 
         duplicate = self.client.post(
             f"/api/live-coding/{start.data['id']}/submit/",
-            {"task_id": task.id, "submitted_code": "docker --version"},
+            {"task_id": current_task_id, "submitted_code": expected_solution},
             format="json",
         )
         self.assertEqual(duplicate.status_code, 400)

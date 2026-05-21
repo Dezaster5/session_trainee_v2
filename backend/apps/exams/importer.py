@@ -50,6 +50,11 @@ def normalize_text(value):
     return WHITESPACE_RE.sub(" ", value).strip()
 
 
+def normalize_code_block(value):
+    value = (value or "").replace("\r\n", "\n").replace("\r", "\n").strip()
+    return "\n".join(line.rstrip() for line in value.splitlines())
+
+
 def subject_name_from_dir(value):
     normalized = normalize_text(str(value).replace("_", " "))
     return normalized.title() if normalized else str(value)
@@ -248,7 +253,7 @@ def parse_json_live_coding(data):
                 "title": normalize_text(item.get("title") or prompt[:120] or "Live coding task"),
                 "prompt": prompt,
                 "language": language or "text",
-                "expected_solution": normalize_text(item.get("expected_solution") or ""),
+                "expected_solution": normalize_code_block(item.get("expected_solution") or ""),
                 "check_type": normalize_text(item.get("check_type") or checking_method.get("mode") or "similarity"),
                 "difficulty": normalize_text(item.get("difficulty") or ""),
                 "tags": item.get("tags") if isinstance(item.get("tags"), list) else [],
