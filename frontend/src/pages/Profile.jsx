@@ -1,4 +1,4 @@
-import { CalendarDays, CheckCircle2, Trophy, User, XCircle } from "lucide-react";
+import { CalendarDays, CheckCircle2, Code2, Trophy, User, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import api from "../api/client";
@@ -37,6 +37,7 @@ export default function Profile() {
         <StatCard label="Правильно" value={totals.correct_answers} icon={CheckCircle2} tone="green" />
         <StatCard label="Ошибки" value={totals.wrong_answers} icon={XCircle} tone="red" />
         <StatCard label="Winrate" value={formatPercent(totals.winrate)} icon={CalendarDays} tone="amber" />
+        <StatCard label="Live coding" value={totals.live_coding_attempts || 0} hint={`${totals.live_coding_solved || 0} solved`} icon={Code2} tone="blue" />
         <StatCard label="Очки" value={totals.points} icon={Trophy} tone="teal" />
       </section>
 
@@ -50,7 +51,7 @@ export default function Profile() {
               <div>
                 <strong>{subject.subject_name}</strong>
                 <span>
-                  {subject.total_answered} ответов · {subject.points} очков
+                  {subject.total_answered} ответов · {subject.live_coding_attempts || 0} coding · {subject.points} очков
                 </span>
               </div>
               <div className="subject-row-progress">

@@ -1,4 +1,4 @@
-import { ArrowLeft, BookOpen, Brain, CheckCircle2, Clock3, Play, Shuffle, Target, Zap } from "lucide-react";
+import { ArrowLeft, Brain, CheckCircle2, Clock3, Code2, Play, Shuffle, Target, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
@@ -6,36 +6,32 @@ import api from "../api/client";
 import LoadingState from "../components/LoadingState";
 
 const modes = [
-  ["random", "Умный микс", Shuffle, "Баланс новых, сложных и обычных вопросов"],
-  ["new", "Новые", Zap, "Только вопросы, которые еще не встречались"],
-  ["mistakes", "Ошибки", Target, "Вопросы с неправильными ответами"],
-  ["hard", "Сложные", Brain, "Низкий личный winrate и высокий вес"],
-  ["rare", "Редкие", Clock3, "Вопросы, которые попадались редко"],
-  ["spaced", "Повторение", CheckCircle2, "Приоритет прошлых ошибок и веса"],
-  ["review_all", "Вся база", BookOpen, "Свободное повторение предмета"],
+  ["random", "Умный микс", Shuffle, "Новые, слабые и обычные задачи"],
+  ["new", "Новые", Zap, "Только задачи без попыток"],
+  ["mistakes", "Слабые", Target, "Best similarity ниже порога"],
+  ["hard", "Сложные", Brain, "Задачи с низким лучшим результатом"],
+  ["rare", "Редкие", Clock3, "Задачи с минимумом попыток"],
+  ["spaced", "Повторение", CheckCircle2, "Вернуть слабые задачи в работу"],
 ];
-
-const modeValues = new Set(modes.map(([value]) => value));
 
 const counts = ["5", "10", "20", "50", "all", "custom"];
 
-export default function TestSetup() {
+export default function LiveCodingSetup() {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [subject, setSubject] = useState(null);
+  const requestedTopicId = Number(searchParams.get("topic"));
   const requestedMode = searchParams.get("mode") || "random";
-  const requestedTopic = searchParams.get("topic");
-  const requestedTopicId = Number(requestedTopic);
-  const [mode, setMode] = useState(modeValues.has(requestedMode) ? requestedMode : "random");
+  const [subject, setSubject] = useState(null);
+  const [mode, setMode] = useState(modes.some(([value]) => value === requestedMode) ? requestedMode : "random");
   const [count, setCount] = useState("10");
-  const [customCount, setCustomCount] = useState("30");
+  const [customCount, setCustomCount] = useState("10");
   const [selectedTopics, setSelectedTopics] = useState(
     Number.isInteger(requestedTopicId) && requestedTopicId > 0 ? [requestedTopicId] : []
   );
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     api
@@ -45,7 +41,13 @@ export default function TestSetup() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  async function startTest() {
+  function toggleTopic(topicId) {
+    setSelectedTopics((items) =>
+      items.includes(topicId) ? items.filter((item) => item !== topicId) : [...items, topicId]
+    );
+  }
+
+  async function startSession() {
     if (count === "custom") {
       const parsedCount = Number(customCount);
       if (!Number.isInteger(parsedCount) || parsedCount < 1 || parsedCount > 200) {
@@ -53,52 +55,36 @@ export default function TestSetup() {
         return;
       }
     }
+
     setStarting(true);
     setError("");
     try {
-      const { data } = await api.post("/tests/start/", {
+      const { data } = await api.post("/live-coding/start/", {
         subject_id: Number(id),
         mode,
-        question_count: count === "custom" ? customCount : count,
+        task_count: count === "custom" ? customCount : count,
         topic_ids: selectedTopics,
       });
-      navigate(`/tests/${data.id}`);
+      navigate(`/live-coding/${data.id}`);
     } catch (requestError) {
-      setError(requestError.response?.data?.detail || "Не удалось начать тест");
+      setError(requestError.response?.data?.detail || "Не удалось начать live coding");
     } finally {
       setStarting(false);
     }
   }
 
-  if (loading) return <LoadingState label="Подготовка теста" />;
-  if (!subject) {
-    return (
-      <div className="page-stack">
-        <div className="form-error">{error || "Предмет недоступен"}</div>
-      </div>
-    );
-  }
-
-  const theoryTopics = (subject.topics || []).filter((topic) => topic.type === "theory" && topic.question_count > 0);
-
-  function toggleTopic(topicId) {
-    setSelectedTopics((items) =>
-      items.includes(topicId) ? items.filter((item) => item !== topicId) : [...items, topicId]
-    );
-  }
+  if (loading) return <LoadingState label="Подготовка live coding" />;
+  const liveTopics = (subject?.topics || []).filter((topic) => topic.type === "live_coding" && topic.live_coding_count > 0);
 
   return (
     <div className="page-stack">
       <header className="page-header">
         <div>
           <Link to={`/subjects/${id}`} className="back-link">
-            <ArrowLeft size={17} /> {subject.name}
+            <ArrowLeft size={17} /> {subject?.name || "Предмет"}
           </Link>
-          <h1>Настройка теста</h1>
-        </div>
-        <div className="setup-summary">
-          <strong>{subject.question_count}</strong>
-          <span>вопросов в базе</span>
+          <h1>Live coding</h1>
+          <span className="subtle">{subject?.live_coding_count || 0} задач с similarity-проверкой</span>
         </div>
       </header>
 
@@ -109,12 +95,7 @@ export default function TestSetup() {
           </div>
           <div className="segmented">
             {counts.map((item) => (
-              <button
-                key={item}
-                type="button"
-                className={count === item ? "active" : ""}
-                onClick={() => setCount(item)}
-              >
+              <button key={item} type="button" className={count === item ? "active" : ""} onClick={() => setCount(item)}>
                 {item === "all" ? "Все" : item === "custom" ? "Свое" : item}
               </button>
             ))}
@@ -122,13 +103,7 @@ export default function TestSetup() {
           {count === "custom" ? (
             <label className="field-inline">
               Свое количество
-              <input
-                type="number"
-                min="1"
-                max="200"
-                value={customCount}
-                onChange={(event) => setCustomCount(event.target.value)}
-              />
+              <input min="1" max="200" type="number" value={customCount} onChange={(event) => setCustomCount(event.target.value)} />
             </label>
           ) : null}
         </div>
@@ -142,9 +117,9 @@ export default function TestSetup() {
               </button>
             ) : null}
           </div>
-          {theoryTopics.length ? (
+          {liveTopics.length ? (
             <div className="topic-picker">
-              {theoryTopics.map((topic) => (
+              {liveTopics.map((topic) => (
                 <button
                   key={topic.id}
                   type="button"
@@ -152,14 +127,14 @@ export default function TestSetup() {
                   onClick={() => toggleTopic(topic.id)}
                 >
                   <strong>{topic.title}</strong>
-                  <span>{topic.question_count} вопросов</span>
+                  <span>{topic.live_coding_count} задач</span>
                 </button>
               ))}
             </div>
           ) : (
             <div className="empty-state state compact-state">
-              <strong>Темы не заданы</strong>
-              <span>Будет использована вся база предмета.</span>
+              <strong>Live coding задач нет</strong>
+              <span>Импортируйте JSON-базу с секцией liveCoding.</span>
             </div>
           )}
         </div>
@@ -170,12 +145,7 @@ export default function TestSetup() {
           </div>
           <div className="mode-list">
             {modes.map(([value, label, Icon, description]) => (
-              <button
-                key={value}
-                type="button"
-                className={mode === value ? "mode-item active" : "mode-item"}
-                onClick={() => setMode(value)}
-              >
+              <button key={value} type="button" className={mode === value ? "mode-item active" : "mode-item"} onClick={() => setMode(value)}>
                 <Icon size={18} />
                 <span>
                   <strong>{label}</strong>
@@ -189,9 +159,9 @@ export default function TestSetup() {
 
       {error ? <div className="form-error">{error}</div> : null}
 
-      <button type="button" className="primary-button wide-action" onClick={startTest} disabled={starting}>
-        <Play size={19} />
-        {starting ? "Запускаем" : "Начать"}
+      <button type="button" className="primary-button wide-action" onClick={startSession} disabled={starting || !subject?.live_coding_count}>
+        <Code2 size={19} />
+        {starting ? "Запускаем" : "Начать live coding"}
       </button>
     </div>
   );

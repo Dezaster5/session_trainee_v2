@@ -5,7 +5,7 @@ from apps.exams.importer import import_questions_from_base
 
 
 class Command(BaseCommand):
-    help = "Import tagged exam questions from PDF files under base/<subject>/."
+    help = "Import tagged exam questions from PDF and JSON files under base/<subject>/."
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -24,10 +24,13 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS("Import finished"))
         self.stdout.write(f"Subjects found: {summary.subjects_found}")
-        self.stdout.write(f"PDF files found: {summary.files_found}")
+        self.stdout.write(f"Files found: {summary.files_found}")
         self.stdout.write(f"Questions imported: {summary.imported_questions}")
-        self.stdout.write(f"Duplicates skipped: {summary.duplicate_questions}")
+        self.stdout.write(f"Question duplicates updated/skipped: {summary.duplicate_questions}")
         self.stdout.write(f"Invalid questions skipped: {summary.skipped_questions}")
+        self.stdout.write(f"Live coding tasks imported: {summary.imported_live_coding_tasks}")
+        self.stdout.write(f"Live coding duplicates updated/skipped: {summary.duplicate_live_coding_tasks}")
+        self.stdout.write(f"Invalid live coding tasks skipped: {summary.skipped_live_coding_tasks}")
 
         if summary.errors:
             self.stdout.write(self.style.WARNING("Errors:"))

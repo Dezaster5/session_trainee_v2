@@ -899,6 +899,7 @@ input {
 .stat-card:hover,
 .subject-card:hover,
 .mistake-card:hover,
+.topic-card:hover,
 .podium-card:hover {
   transform: translateY(-2px);
   border-color: #c7d2dc;
@@ -955,6 +956,7 @@ input {
 .leader-row,
 .answer-option,
 .mode-item,
+.topic-chip,
 .segmented button,
 .primary-button,
 .secondary-button {
@@ -965,6 +967,7 @@ input {
 .compact-item:hover,
 .answer-option:hover:not(:disabled),
 .mode-item:hover,
+.topic-chip:hover,
 .segmented button:hover,
 .secondary-button:hover {
   transform: translateY(-1px);
@@ -1034,6 +1037,95 @@ input {
   display: flex;
   align-items: center;
   gap: 7px;
+}
+
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.topic-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.topic-card h3 {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.35;
+}
+
+.topic-head,
+.task-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.topic-head {
+  justify-content: space-between;
+}
+
+.topic-metrics {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.topic-metrics span,
+.task-badges span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: #405061;
+  font-size: 13px;
+}
+
+.topic-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+}
+
+.topic-chip {
+  display: grid;
+  gap: 4px;
+  min-height: 72px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: #34465a;
+  text-align: left;
+}
+
+.topic-chip.active {
+  border-color: #0b8074;
+  background: var(--teal-soft);
+  color: #087366;
+}
+
+.topic-chip span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.compact-state {
+  min-height: 120px;
+}
+
+.tabs {
+  justify-content: flex-start;
 }
 
 .setup-summary {
@@ -1109,6 +1201,84 @@ input {
   align-items: center;
   color: var(--muted);
   font-weight: 800;
+}
+
+.live-session {
+  max-width: 1180px;
+}
+
+.live-coding-grid,
+.comparison-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1.15fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.live-task-panel {
+  align-content: start;
+}
+
+.live-task-panel h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.28;
+}
+
+.live-task-panel p {
+  margin: 0;
+  color: #405061;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.editor-panel {
+  align-content: start;
+}
+
+.code-editor {
+  width: 100%;
+  min-height: 360px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #111827;
+  color: #e5eef8;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+  line-height: 1.55;
+  resize: vertical;
+}
+
+.code-editor:focus {
+  outline: 2px solid rgba(15, 159, 143, 0.28);
+  border-color: var(--teal);
+}
+
+.live-feedback.excellent,
+.live-feedback.good {
+  border-color: rgba(29, 154, 95, 0.35);
+}
+
+.live-feedback.needs_practice {
+  border-color: rgba(183, 121, 31, 0.35);
+}
+
+.live-feedback.wrong {
+  border-color: rgba(214, 69, 69, 0.35);
+}
+
+.code-block {
+  overflow-x: auto;
+  margin: 0;
+  padding: 14px;
+  border-radius: 8px;
+  background: #111827;
+  color: #e5eef8;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }
 
 .question-panel {
@@ -1310,6 +1480,8 @@ input {
 
   .dashboard-grid,
   .setup-grid,
+  .live-coding-grid,
+  .comparison-grid,
   .dashboard-hero,
   .result-hero {
     grid-template-columns: 1fr;
@@ -1354,6 +1526,7 @@ input {
   .leader-row,
   .mode-list,
   .mode-item,
+  .topic-picker,
   .test-progress {
     grid-template-columns: 1fr;
   }
@@ -1412,5 +1585,9 @@ input {
 
   .data-table {
     min-width: 680px;
+  }
+
+  .code-editor {
+    min-height: 260px;
   }
 }

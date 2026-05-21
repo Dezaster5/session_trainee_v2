@@ -2,18 +2,25 @@ import hashlib
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.db.models import Count, Q, Sum
 from rest_framework import serializers
 
 from .models import (
     AnswerVariant,
     ImportRun,
+    LiveCodingAttempt,
+    LiveCodingSession,
+    LiveCodingTask,
     Question,
     Subject,
     TestAnswer,
     TestSession,
+    Topic,
+    UserLiveCodingProgress,
     UserQuestionProgress,
     UserSubjectStats,
 )
+from .live_coding_services import get_next_live_coding_task
 from .services import get_next_question
 
 
@@ -69,6 +76,80 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ("id", "username", "email", "date_joined", "is_staff")
 
 
+class TopicSerializer(serializers.ModelSerializer):
+    question_count = serializers.SerializerMethodField()
+    live_coding_count = serializers.SerializerMethodField()
+    progress = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Topic
+        fields = (
+            "id",
+            "title",
+            "slug",
+            "type",
+            "order",
+            "question_count",
+            "live_coding_count",
+            "progress",
+        )
+
+    def get_question_count(self, obj):
+        return getattr(obj, "question_count", None) or obj.questions.count()
+
+    def get_live_coding_count(self, obj):
+        return getattr(obj, "live_coding_count", None) or obj.live_coding_tasks.count()
+
+    def get_progress(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+
+        if obj.type == Topic.TYPE_LIVE_CODING:
+            values = UserLiveCodingProgress.objects.filter(
+                user=request.user,
+                task__topic=obj,
+            ).aggregate(
+                total_answered=Sum("attempts_count"),
+                solved=Count("id", filter=Q(is_solved=True)),
+                unique_seen=Count("id"),
+            )
+            total = values["total_answered"] or 0
+            solved = values["solved"] or 0
+            return {
+                "total_answered": total,
+                "correct_answers": solved,
+                "wrong_answers": max(total - solved, 0),
+                "winrate": round(solved * 100 / total, 2) if total else 0,
+                "unique_seen": values["unique_seen"] or 0,
+            }
+
+        values = UserQuestionProgress.objects.filter(
+            user=request.user,
+            question__topic=obj,
+        ).aggregate(
+            correct_answers=Sum("times_correct"),
+            wrong_answers=Sum("times_wrong"),
+            unique_seen=Count("id"),
+        )
+        correct = values["correct_answers"] or 0
+        wrong = values["wrong_answers"] or 0
+        total = correct + wrong
+        return {
+            "total_answered": total,
+            "correct_answers": correct,
+            "wrong_answers": wrong,
+            "winrate": round(correct * 100 / total, 2) if total else 0,
+            "unique_seen": values["unique_seen"] or 0,
+        }
+
+
+class TopicMiniSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Topic
+        fields = ("id", "title", "slug", "type")
+
+
 class PublicAnswerVariantSerializer(serializers.ModelSerializer):
     class Meta:
         model = AnswerVariant
@@ -83,22 +164,25 @@ class AnswerVariantSerializer(serializers.ModelSerializer):
 
 class QuestionForTestSerializer(serializers.ModelSerializer):
     variants = PublicAnswerVariantSerializer(many=True, read_only=True)
+    topic = TopicMiniSerializer(read_only=True)
 
     class Meta:
         model = Question
-        fields = ("id", "text", "variants")
+        fields = ("id", "text", "topic", "difficulty", "variants")
 
 
 class QuestionWithAnswersSerializer(serializers.ModelSerializer):
     variants = AnswerVariantSerializer(many=True, read_only=True)
+    topic = TopicMiniSerializer(read_only=True)
 
     class Meta:
         model = Question
-        fields = ("id", "text", "variants", "source_file")
+        fields = ("id", "text", "topic", "difficulty", "explanation", "variants", "source_file")
 
 
 class SubjectSerializer(serializers.ModelSerializer):
     question_count = serializers.SerializerMethodField()
+    live_coding_count = serializers.SerializerMethodField()
     users_count = serializers.SerializerMethodField()
     overall_completion_percent = serializers.SerializerMethodField()
 
@@ -110,12 +194,16 @@ class SubjectSerializer(serializers.ModelSerializer):
             "slug",
             "imported_at",
             "question_count",
+            "live_coding_count",
             "users_count",
             "overall_completion_percent",
         )
 
     def get_question_count(self, obj):
         return getattr(obj, "question_count", None) or obj.questions.count()
+
+    def get_live_coding_count(self, obj):
+        return getattr(obj, "live_coding_count", None) or obj.live_coding_tasks.count()
 
     def get_users_count(self, obj):
         annotated = getattr(obj, "users_count", None)
@@ -141,9 +229,10 @@ class SubjectSerializer(serializers.ModelSerializer):
 
 class SubjectDetailSerializer(SubjectSerializer):
     user_stats = serializers.SerializerMethodField()
+    topics = serializers.SerializerMethodField()
 
     class Meta(SubjectSerializer.Meta):
-        fields = SubjectSerializer.Meta.fields + ("user_stats",)
+        fields = SubjectSerializer.Meta.fields + ("user_stats", "topics")
 
     def get_user_stats(self, obj):
         user = self.context["request"].user
@@ -154,17 +243,33 @@ class SubjectDetailSerializer(SubjectSerializer):
                 "unique_questions_seen": 0,
                 "correct_answers": 0,
                 "wrong_answers": 0,
+                "live_coding_attempts": 0,
+                "live_coding_solved": 0,
+                "average_live_coding_similarity": 0,
                 "winrate": 0,
                 "points": 0,
                 "last_activity_at": None,
             }
         return UserSubjectStatsSerializer(stats).data
 
+    def get_topics(self, obj):
+        topics = obj.topics.annotate(
+            question_count=Count("questions", distinct=True),
+            live_coding_count=Count("live_coding_tasks", distinct=True),
+        ).order_by("type", "order", "title")
+        return TopicSerializer(topics, many=True, context=self.context).data
+
 
 class TestStartSerializer(serializers.Serializer):
     subject_id = serializers.IntegerField()
     mode = serializers.ChoiceField(choices=[choice[0] for choice in TestSession.MODE_CHOICES], default=TestSession.MODE_RANDOM)
     question_count = serializers.CharField(default="10")
+    topic_id = serializers.IntegerField(required=False)
+    topic_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
 
     def validate_question_count(self, value):
         value = str(value).strip().lower()
@@ -179,6 +284,14 @@ class TestStartSerializer(serializers.Serializer):
         if count > 200:
             raise serializers.ValidationError("Custom question count cannot exceed 200.")
         return str(count)
+
+    def validate(self, attrs):
+        topic_ids = list(attrs.get("topic_ids") or [])
+        topic_id = attrs.get("topic_id")
+        if topic_id:
+            topic_ids.append(topic_id)
+        attrs["topic_ids"] = list(dict.fromkeys(topic_ids))
+        return attrs
 
 
 class TestAnswerInputSerializer(serializers.Serializer):
@@ -222,6 +335,8 @@ class TestSessionStateSerializer(serializers.ModelSerializer):
             "question": {
                 "id": question.id,
                 "text": question.text,
+                "topic": TopicMiniSerializer(question.topic).data if question.topic else None,
+                "difficulty": question.difficulty,
                 "variants": PublicAnswerVariantSerializer(
                     shuffled_answer_variants(question, obj.id, entry.order),
                     many=True,
@@ -328,6 +443,9 @@ class UserSubjectStatsSerializer(serializers.ModelSerializer):
             "unique_questions_seen",
             "correct_answers",
             "wrong_answers",
+            "live_coding_attempts",
+            "live_coding_solved",
+            "average_live_coding_similarity",
             "winrate",
             "points",
             "last_activity_at",
@@ -338,6 +456,7 @@ class MistakeSerializer(serializers.ModelSerializer):
     question = QuestionForTestSerializer(read_only=True)
     subject = serializers.CharField(source="question.subject.name", read_only=True)
     subject_id = serializers.IntegerField(source="question.subject_id", read_only=True)
+    topic = TopicMiniSerializer(source="question.topic", read_only=True)
     personal_winrate = serializers.FloatField(read_only=True)
 
     class Meta:
@@ -346,6 +465,7 @@ class MistakeSerializer(serializers.ModelSerializer):
             "question",
             "subject",
             "subject_id",
+            "topic",
             "times_seen",
             "times_correct",
             "times_wrong",
@@ -373,7 +493,193 @@ class LeaderboardEntrySerializer(serializers.ModelSerializer):
             "total_answered",
             "winrate",
             "unique_questions_seen",
+            "live_coding_attempts",
+            "live_coding_solved",
+            "average_live_coding_similarity",
             "subject_id",
+        )
+
+
+class LiveCodingTaskSerializer(serializers.ModelSerializer):
+    subject = serializers.CharField(source="subject.name", read_only=True)
+    subject_id = serializers.IntegerField(read_only=True)
+    topic = TopicMiniSerializer(read_only=True)
+    progress = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LiveCodingTask
+        fields = (
+            "id",
+            "subject",
+            "subject_id",
+            "topic",
+            "title",
+            "prompt",
+            "language",
+            "check_type",
+            "difficulty",
+            "tags",
+            "progress",
+        )
+
+    def get_progress(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        progress = UserLiveCodingProgress.objects.filter(user=request.user, task=obj).first()
+        if not progress:
+            return {
+                "attempts_count": 0,
+                "best_similarity": 0,
+                "last_similarity": 0,
+                "is_solved": False,
+                "points_earned": 0,
+            }
+        return {
+            "attempts_count": progress.attempts_count,
+            "best_similarity": progress.best_similarity,
+            "last_similarity": progress.last_similarity,
+            "is_solved": progress.is_solved,
+            "points_earned": progress.points_earned,
+        }
+
+
+class LiveCodingStartSerializer(serializers.Serializer):
+    subject_id = serializers.IntegerField()
+    mode = serializers.ChoiceField(
+        choices=[choice[0] for choice in LiveCodingSession.MODE_CHOICES],
+        default=LiveCodingSession.MODE_RANDOM,
+    )
+    task_count = serializers.CharField(default="10")
+    topic_id = serializers.IntegerField(required=False)
+    topic_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        allow_empty=True,
+    )
+
+    def validate_task_count(self, value):
+        value = str(value).strip().lower()
+        if value in {"5", "10", "20", "50", "all"}:
+            return value
+        try:
+            count = int(value)
+        except ValueError as exc:
+            raise serializers.ValidationError("Use 5, 10, 20, 50, all, or a custom positive integer.") from exc
+        if count < 1:
+            raise serializers.ValidationError("Custom task count must be positive.")
+        if count > 200:
+            raise serializers.ValidationError("Custom task count cannot exceed 200.")
+        return str(count)
+
+    def validate(self, attrs):
+        topic_ids = list(attrs.get("topic_ids") or [])
+        topic_id = attrs.get("topic_id")
+        if topic_id:
+            topic_ids.append(topic_id)
+        attrs["topic_ids"] = list(dict.fromkeys(topic_ids))
+        return attrs
+
+
+class LiveCodingSubmitSerializer(serializers.Serializer):
+    task_id = serializers.IntegerField()
+    submitted_code = serializers.CharField(allow_blank=True, trim_whitespace=False)
+    time_spent = serializers.IntegerField(required=False, min_value=0, default=0)
+
+
+class LiveCodingSessionStateSerializer(serializers.ModelSerializer):
+    subject = SubjectSerializer(read_only=True)
+    answered_count = serializers.SerializerMethodField()
+    current_task = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LiveCodingSession
+        fields = (
+            "id",
+            "subject",
+            "mode",
+            "total_tasks",
+            "status",
+            "started_at",
+            "finished_at",
+            "score",
+            "average_similarity",
+            "answered_count",
+            "current_task",
+        )
+
+    def get_answered_count(self, obj):
+        return obj.attempts.values("task_id").distinct().count()
+
+    def get_current_task(self, obj):
+        entry = get_next_live_coding_task(obj)
+        if not entry:
+            return None
+        return {
+            "order": entry.order,
+            "task": LiveCodingTaskSerializer(entry.task, context=self.context).data,
+        }
+
+
+class LiveCodingAttemptSerializer(serializers.ModelSerializer):
+    task = LiveCodingTaskSerializer(read_only=True)
+    expected_solution = serializers.CharField(source="task.expected_solution", read_only=True)
+
+    class Meta:
+        model = LiveCodingAttempt
+        fields = (
+            "id",
+            "task",
+            "similarity_score",
+            "status",
+            "points_awarded",
+            "feedback",
+            "expected_solution",
+            "submitted_code",
+            "attempted_at",
+            "time_spent",
+        )
+
+
+class LiveCodingResultSerializer(serializers.ModelSerializer):
+    subject = SubjectSerializer(read_only=True)
+    attempts = LiveCodingAttemptSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = LiveCodingSession
+        fields = (
+            "id",
+            "subject",
+            "mode",
+            "total_tasks",
+            "status",
+            "started_at",
+            "finished_at",
+            "score",
+            "average_similarity",
+            "attempts",
+        )
+
+
+class LiveCodingWeakTaskSerializer(serializers.ModelSerializer):
+    task = LiveCodingTaskSerializer(read_only=True)
+    subject = serializers.CharField(source="task.subject.name", read_only=True)
+    subject_id = serializers.IntegerField(source="task.subject_id", read_only=True)
+    topic = TopicMiniSerializer(source="task.topic", read_only=True)
+
+    class Meta:
+        model = UserLiveCodingProgress
+        fields = (
+            "task",
+            "subject",
+            "subject_id",
+            "topic",
+            "attempts_count",
+            "best_similarity",
+            "last_similarity",
+            "is_solved",
+            "last_attempt_at",
+            "points_earned",
         )
 
 
@@ -391,5 +697,8 @@ class ImportRunSerializer(serializers.ModelSerializer):
             "imported_questions",
             "duplicate_questions",
             "skipped_questions",
+            "imported_live_coding_tasks",
+            "duplicate_live_coding_tasks",
+            "skipped_live_coding_tasks",
             "errors",
         )

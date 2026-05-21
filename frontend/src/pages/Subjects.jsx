@@ -1,4 +1,4 @@
-import { ArrowRight, BookOpen, CalendarDays, Play, Users } from "lucide-react";
+import { ArrowRight, BookOpen, CalendarDays, Code2, Play, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -59,6 +59,11 @@ export default function Subjects() {
                   <span>Студенты</span>
                   <strong>{subject.users_count}</strong>
                 </div>
+                <div>
+                  <Code2 size={17} />
+                  <span>Live coding</span>
+                  <strong>{subject.live_coding_count || 0}</strong>
+                </div>
               </div>
               <ProgressBar value={subject.overall_completion_percent} max={100} />
               <div className="subject-card-foot">
@@ -69,6 +74,11 @@ export default function Subjects() {
                 <Link className="secondary-button" to={`/subjects/${subject.id}`}>
                   Детали <ArrowRight size={17} />
                 </Link>
+                {subject.live_coding_count ? (
+                  <Link className="secondary-button" to={`/subjects/${subject.id}/live-coding`}>
+                    <Code2 size={17} /> Code
+                  </Link>
+                ) : null}
                 <Link className="primary-button" to={`/subjects/${subject.id}/test`}>
                   <Play size={17} /> Тест
                 </Link>

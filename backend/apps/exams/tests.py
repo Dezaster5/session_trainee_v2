@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -7,7 +8,23 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from .importer import import_questions_from_base, parse_tagged_questions, question_hash, validate_question
-from .models import AnswerVariant, Question, Subject, TestSession, TestSessionQuestion, UserQuestionProgress, UserSubjectStats
+from .live_coding_services import (
+    calculate_final_similarity,
+    create_live_coding_session,
+    submit_live_coding_attempt,
+)
+from .models import (
+    AnswerVariant,
+    LiveCodingTask,
+    Question,
+    Subject,
+    TestSession,
+    TestSessionQuestion,
+    Topic,
+    UserLiveCodingProgress,
+    UserQuestionProgress,
+    UserSubjectStats,
+)
 from .serializers import TestSessionStateSerializer
 from .services import calculate_points, create_test_session, record_answer, select_questions
 
@@ -94,14 +111,73 @@ class ImportParserTests(TestCase):
         self.assertEqual(Question.objects.count(), 1)
 
 
+class JsonImportTests(TestCase):
+    def test_imports_json_questions_topics_and_live_coding_without_duplicates(self):
+        payload = {
+            "questions": [
+                {
+                    "id": "Q1",
+                    "topic": "Spring Boot / Backend",
+                    "subtopic": "Spring Fundamentals",
+                    "question": "What does @RestController do?",
+                    "options": [
+                        {"id": "A", "text": "Marks a REST controller", "is_correct": True},
+                        {"id": "B", "text": "Creates a database", "is_correct": False},
+                    ],
+                    "correct_option_id": "A",
+                    "explanation": "It combines controller and response body behavior.",
+                }
+            ],
+            "liveCoding": [
+                {
+                    "id": "LC1",
+                    "topic": "Docker",
+                    "task": "Write the command to check Docker version.",
+                    "expected_solution_language": "shell",
+                    "expected_solution": "docker --version",
+                    "checking_method": {"mode": "similarity_percentage"},
+                }
+            ],
+        }
+
+        with TemporaryDirectory() as tmp:
+            subject_dir = Path(tmp) / "Web_component_development"
+            subject_dir.mkdir()
+            (subject_dir / "final_exam_questions.json").write_text(json.dumps(payload), encoding="utf-8")
+
+            first = import_questions_from_base(tmp)
+            second = import_questions_from_base(tmp)
+
+        subject = Subject.objects.get(slug="web_component_development")
+        question = Question.objects.get(subject=subject)
+        task = LiveCodingTask.objects.get(subject=subject)
+
+        self.assertEqual(subject.name, "Web Component Development")
+        self.assertEqual(Topic.objects.filter(subject=subject, type=Topic.TYPE_THEORY).count(), 1)
+        self.assertEqual(Topic.objects.filter(subject=subject, type=Topic.TYPE_LIVE_CODING).count(), 1)
+        self.assertEqual(question.import_format, Question.FORMAT_JSON)
+        self.assertEqual(question.variants.count(), 2)
+        self.assertEqual(question.variants.get(is_correct=True).text, "Marks a REST controller")
+        self.assertEqual(task.expected_solution, "docker --version")
+        self.assertEqual(first.imported_questions, 1)
+        self.assertEqual(first.imported_live_coding_tasks, 1)
+        self.assertEqual(second.imported_questions, 0)
+        self.assertEqual(second.imported_live_coding_tasks, 0)
+        self.assertEqual(Question.objects.count(), 1)
+        self.assertEqual(LiveCodingTask.objects.count(), 1)
+
+
 class TestSelectionAndScoringTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="student", password="strong-pass-123")
         self.subject = Subject.objects.create(name="Machine Learning", slug="machine-learning")
+        self.topic_a = Topic.objects.create(subject=self.subject, title="Topic A", slug="topic-a", type=Topic.TYPE_THEORY, order=1)
+        self.topic_b = Topic.objects.create(subject=self.subject, title="Topic B", slug="topic-b", type=Topic.TYPE_THEORY, order=2)
         self.questions = []
         for index in range(6):
             question = Question.objects.create(
                 subject=self.subject,
+                topic=self.topic_a if index < 3 else self.topic_b,
                 text=f"Question {index}",
                 source_file="sample.pdf",
                 hash=f"hash-{index}",
@@ -127,6 +203,27 @@ class TestSelectionAndScoringTests(TestCase):
 
         self.assertEqual(selected, [])
         self.assertIsNone(session)
+
+    def test_question_selection_filters_by_topic_ids(self):
+        selected = select_questions(
+            self.user,
+            self.subject,
+            TestSession.MODE_REVIEW_ALL,
+            10,
+            topic_ids=[self.topic_a.id],
+        )
+        session = create_test_session(
+            self.user,
+            self.subject,
+            TestSession.MODE_REVIEW_ALL,
+            10,
+            topic_ids=[self.topic_a.id],
+        )
+
+        self.assertEqual(len(selected), 3)
+        self.assertTrue(all(question.topic_id == self.topic_a.id for question in selected))
+        self.assertEqual(session.session_questions.count(), 3)
+        self.assertTrue(all(item.question.topic_id == self.topic_a.id for item in session.session_questions.select_related("question")))
 
     def test_mistakes_mode_prioritizes_wrong_questions(self):
         UserQuestionProgress.objects.create(
@@ -231,6 +328,107 @@ class TestSelectionAndScoringTests(TestCase):
         self.assertNotEqual(shuffled_ids, original_ids)
 
 
+class LiveCodingServiceTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username="coder", password="strong-pass-123")
+        self.subject = Subject.objects.create(name="Web Component Development", slug="web_component_development")
+        self.topic = Topic.objects.create(
+            subject=self.subject,
+            title="Docker",
+            slug="docker",
+            type=Topic.TYPE_LIVE_CODING,
+            order=1,
+        )
+        self.task = LiveCodingTask.objects.create(
+            subject=self.subject,
+            topic=self.topic,
+            title="Docker version",
+            prompt="Write the command to check Docker version.",
+            language="shell",
+            expected_solution="docker --version",
+            source_file="sample.json",
+            hash="live-hash-1",
+        )
+
+    def test_similarity_accepts_exact_and_near_command_answers(self):
+        exact = calculate_final_similarity("docker --version", "docker --version", "shell", "similarity")
+        near = calculate_final_similarity("docker version", "docker --version", "shell", "similarity")
+
+        self.assertEqual(exact, 100)
+        self.assertGreaterEqual(near, 70)
+
+    def test_similarity_ignores_java_formatting(self):
+        expected = "@RestController public class HelloController { @GetMapping(\"/hi\") public String hi(){ return \"hi\"; } }"
+        submitted = """
+        @RestController
+        public class HelloController {
+          @GetMapping("/hi")
+          public String hi() {
+            return "hi";
+          }
+        }
+        """
+
+        score = calculate_final_similarity(submitted, expected, "java", "similarity")
+
+        self.assertGreaterEqual(score, 90)
+
+    def test_submit_attempt_updates_progress_stats_and_caps_points(self):
+        session = create_live_coding_session(
+            self.user,
+            self.subject,
+            "review_all",
+            1,
+            topic_ids=[self.topic.id],
+        )
+
+        attempt, progress = submit_live_coding_attempt(session, self.task.id, "docker --version")
+        stats = UserSubjectStats.objects.get(user=self.user, subject=self.subject)
+
+        self.assertEqual(attempt.status, "excellent")
+        self.assertTrue(progress.is_solved)
+        self.assertEqual(progress.attempts_count, 1)
+        self.assertEqual(stats.live_coding_attempts, 1)
+        self.assertEqual(stats.live_coding_solved, 1)
+        self.assertEqual(attempt.points_awarded, 15)
+
+        repeat_session = create_live_coding_session(
+            self.user,
+            self.subject,
+            "review_all",
+            1,
+            topic_ids=[self.topic.id],
+        )
+        repeat_attempt, repeat_progress = submit_live_coding_attempt(repeat_session, self.task.id, "docker --version")
+        repeat_session_2 = create_live_coding_session(
+            self.user,
+            self.subject,
+            "review_all",
+            1,
+            topic_ids=[self.topic.id],
+        )
+        third_attempt, repeat_progress = submit_live_coding_attempt(repeat_session_2, self.task.id, "docker --version")
+
+        self.assertEqual(repeat_attempt.points_awarded, 5)
+        self.assertEqual(third_attempt.points_awarded, 0)
+        self.assertEqual(repeat_progress.points_earned, 20)
+
+    def test_duplicate_attempt_in_same_session_is_rejected(self):
+        session = create_live_coding_session(
+            self.user,
+            self.subject,
+            "review_all",
+            1,
+            topic_ids=[self.topic.id],
+        )
+        submit_live_coding_attempt(session, self.task.id, "docker --version")
+
+        with self.assertRaisesMessage(ValueError, "already been attempted"):
+            submit_live_coding_attempt(session, self.task.id, "docker --version")
+
+        self.assertEqual(session.attempts.count(), 1)
+
+
 class ApiEdgeCaseTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="api-user", password="strong-pass-123")
@@ -268,6 +466,17 @@ class ApiEdgeCaseTests(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(TestSession.objects.filter(subject=empty).count(), 0)
 
+    def test_start_test_without_topic_ids_keeps_existing_flow(self):
+        response = self.client.post(
+            "/api/tests/start/",
+            {"subject_id": self.subject.id, "mode": "random", "question_count": "10"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["total_questions"], 1)
+        self.assertIsNotNone(response.data["current_question"])
+
     def test_duplicate_answer_is_rejected(self):
         session = create_test_session(self.user, self.subject, TestSession.MODE_REVIEW_ALL, 1)
         entry = session.session_questions.first()
@@ -302,3 +511,130 @@ class ApiEdgeCaseTests(TestCase):
         usernames = [row["username"] for row in response.data]
         self.assertIn("api-user", usernames)
         self.assertNotIn("viewer", usernames)
+
+    def test_subject_topics_endpoint_returns_counts(self):
+        topic = Topic.objects.create(subject=self.subject, title="Theory Topic", slug="theory-topic", type=Topic.TYPE_THEORY)
+        self.question.topic = topic
+        self.question.save(update_fields=["topic"])
+
+        response = self.client.get(f"/api/subjects/{self.subject.id}/topics/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data[0]["question_count"], 1)
+        self.assertEqual(response.data[0]["progress"]["unique_seen"], 0)
+
+    def test_start_test_accepts_topic_ids(self):
+        topic = Topic.objects.create(subject=self.subject, title="Theory Topic", slug="theory-topic", type=Topic.TYPE_THEORY)
+        self.question.topic = topic
+        self.question.save(update_fields=["topic"])
+
+        response = self.client.post(
+            "/api/tests/start/",
+            {
+                "subject_id": self.subject.id,
+                "mode": "review_all",
+                "question_count": "10",
+                "topic_ids": [topic.id],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["total_questions"], 1)
+
+    def test_start_test_with_empty_topic_pool_returns_clear_error(self):
+        topic = Topic.objects.create(subject=self.subject, title="Empty Topic", slug="empty-topic", type=Topic.TYPE_THEORY)
+
+        response = self.client.post(
+            "/api/tests/start/",
+            {
+                "subject_id": self.subject.id,
+                "mode": "review_all",
+                "question_count": "10",
+                "topic_ids": [topic.id],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("No questions available", response.data["detail"])
+
+    def test_live_coding_api_start_submit_and_mistakes(self):
+        topic = Topic.objects.create(
+            subject=self.subject,
+            title="Docker",
+            slug="docker",
+            type=Topic.TYPE_LIVE_CODING,
+        )
+        task = LiveCodingTask.objects.create(
+            subject=self.subject,
+            topic=topic,
+            title="Docker version",
+            prompt="Write Docker version command.",
+            language="shell",
+            expected_solution="docker --version",
+            source_file="sample.json",
+            hash="api-live-hash",
+        )
+
+        start = self.client.post(
+            "/api/live-coding/start/",
+            {
+                "subject_id": self.subject.id,
+                "mode": "review_all",
+                "task_count": "1",
+                "topic_ids": [topic.id],
+            },
+            format="json",
+        )
+        self.assertEqual(start.status_code, 201)
+        self.assertEqual(start.data["current_task"]["task"]["id"], task.id)
+
+        submit = self.client.post(
+            f"/api/live-coding/{start.data['id']}/submit/",
+            {"task_id": task.id, "submitted_code": "docker --version", "time_spent": 3},
+            format="json",
+        )
+        self.assertEqual(submit.status_code, 200)
+        self.assertEqual(submit.data["attempt"]["status"], "excellent")
+        self.assertIn("expected_solution", submit.data["attempt"])
+
+        duplicate = self.client.post(
+            f"/api/live-coding/{start.data['id']}/submit/",
+            {"task_id": task.id, "submitted_code": "docker --version"},
+            format="json",
+        )
+        self.assertEqual(duplicate.status_code, 400)
+        self.assertIn("already been attempted", duplicate.data["detail"])
+
+        result = self.client.get(f"/api/live-coding/{start.data['id']}/result/")
+        mistakes = self.client.get("/api/progress/live-coding/mistakes/")
+
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.data["attempts"][0]["similarity_score"], 100)
+        self.assertEqual(mistakes.status_code, 200)
+
+    def test_live_coding_mistakes_returns_weak_tasks(self):
+        topic = Topic.objects.create(
+            subject=self.subject,
+            title="Docker",
+            slug="docker-weak",
+            type=Topic.TYPE_LIVE_CODING,
+        )
+        task = LiveCodingTask.objects.create(
+            subject=self.subject,
+            topic=topic,
+            title="Docker ps",
+            prompt="List containers.",
+            language="shell",
+            expected_solution="docker ps",
+            source_file="sample.json",
+            hash="api-live-weak-hash",
+        )
+        session = create_live_coding_session(self.user, self.subject, "review_all", 1, topic_ids=[topic.id])
+        submit_live_coding_attempt(session, task.id, "git status")
+
+        response = self.client.get("/api/progress/live-coding/mistakes/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data[0]["task"]["id"], task.id)

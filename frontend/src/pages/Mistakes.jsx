@@ -1,4 +1,4 @@
-import { Check, Play, SlidersHorizontal, Target } from "lucide-react";
+import { Check, Code2, Play, SlidersHorizontal, Target } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -12,6 +12,8 @@ export default function Mistakes() {
   const navigate = useNavigate();
   const [subjects, setSubjects] = useState([]);
   const [mistakes, setMistakes] = useState([]);
+  const [liveWeak, setLiveWeak] = useState([]);
+  const [activeTab, setActiveTab] = useState("theory");
   const [subject, setSubject] = useState("");
   const [ordering, setOrdering] = useState("-last_wrong_at");
   const [loading, setLoading] = useState(true);
@@ -35,6 +37,16 @@ export default function Mistakes() {
       .finally(() => setLoading(false));
   }, [subject, ordering]);
 
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (subject) params.set("subject", subject);
+    params.set("ordering", ordering === "-last_wrong_at" ? "-last_attempt_at" : ordering);
+    api
+      .get(`/progress/live-coding/mistakes/?${params.toString()}`)
+      .then((response) => setLiveWeak(response.data))
+      .catch(() => setLiveWeak([]));
+  }, [subject, ordering]);
+
   async function markMastered(questionId) {
     try {
       await api.post(`/progress/questions/${questionId}/mark-mastered/`);
@@ -50,6 +62,10 @@ export default function Mistakes() {
 
   async function startMistakes() {
     if (!subject) return;
+    if (activeTab === "live") {
+      navigate(`/subjects/${subject}/live-coding?mode=mistakes`);
+      return;
+    }
     setStarting(true);
     setError("");
     try {
@@ -72,11 +88,13 @@ export default function Mistakes() {
         <div>
           <span className="eyebrow">Mistakes</span>
           <h1>Работа над ошибками</h1>
-          <span className="subtle">{mistakes.length} активных вопросов</span>
+          <span className="subtle">
+            {mistakes.length} theory · {liveWeak.length} live coding
+          </span>
         </div>
         <button type="button" className="primary-button" onClick={startMistakes} disabled={!subject || starting}>
           <Play size={18} />
-          {starting ? "Запуск" : "Тест по ошибкам"}
+          {starting ? "Запуск" : activeTab === "live" ? "Live coding" : "Тест по ошибкам"}
         </button>
       </header>
 
@@ -97,11 +115,20 @@ export default function Mistakes() {
         </select>
       </section>
 
+      <section className="segmented tabs">
+        <button type="button" className={activeTab === "theory" ? "active" : ""} onClick={() => setActiveTab("theory")}>
+          Theory mistakes
+        </button>
+        <button type="button" className={activeTab === "live" ? "active" : ""} onClick={() => setActiveTab("live")}>
+          Live coding weak tasks
+        </button>
+      </section>
+
       {loading ? (
         <LoadingState label="Загрузка ошибок" />
       ) : error ? (
         <ErrorState title="Ошибки недоступны" text={error} />
-      ) : mistakes.length ? (
+      ) : activeTab === "theory" && mistakes.length ? (
         <section className="mistake-list">
           {mistakes.map((item) => (
             <article key={item.question.id} className="mistake-card">
@@ -127,8 +154,38 @@ export default function Mistakes() {
             </article>
           ))}
         </section>
+      ) : activeTab === "live" && liveWeak.length ? (
+        <section className="mistake-list">
+          {liveWeak.map((item) => (
+            <article key={item.task.id} className="mistake-card">
+              <div className="mistake-head">
+                <Code2 size={19} />
+                <span>{item.subject}</span>
+                {item.is_solved ? <b>Solved</b> : null}
+              </div>
+              <h2>{item.task.title}</h2>
+              <p className="subtle">{item.task.prompt}</p>
+              <div className="mistake-meta">
+                <span>Best: {formatPercent(item.best_similarity)}</span>
+                <span>Last: {formatPercent(item.last_similarity)}</span>
+                <span>Attempts: {item.attempts_count}</span>
+              </div>
+              <div className="card-actions">
+                <Link
+                  className="primary-button"
+                  to={`/subjects/${item.subject_id}/live-coding?mode=mistakes${item.topic?.id ? `&topic=${item.topic.id}` : ""}`}
+                >
+                  <Play size={17} /> Repeat
+                </Link>
+              </div>
+            </article>
+          ))}
+        </section>
       ) : (
-        <EmptyState title="Ошибок нет" text="Ошибочные вопросы появятся после тестов" />
+        <EmptyState
+          title={activeTab === "theory" ? "Ошибок нет" : "Слабых live coding задач нет"}
+          text={activeTab === "theory" ? "Ошибочные вопросы появятся после тестов" : "Live coding задачи появятся после попыток ниже solved-порога"}
+        />
       )}
     </div>
   );

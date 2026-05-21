@@ -1,6 +1,6 @@
 # Exam Forge
 
-Production-ready web app for exam preparation from tagged PDF question bases.
+Production-ready web app for exam preparation from tagged PDF and JSON question bases.
 
 ## Stack
 
@@ -15,10 +15,12 @@ Production-ready web app for exam preparation from tagged PDF question bases.
 base/
   <subject_name>/
     *.pdf
+    *.json
 backend/
   apps/exams/
-    importer.py              # PDF parsing and duplicate-safe import
-    services.py              # question selection, scoring, progress updates
+    importer.py              # PDF/JSON parsing and duplicate-safe import
+    services.py              # theory question selection, scoring, progress updates
+    live_coding_services.py  # similarity scoring for live coding practice
     models.py
     serializers.py
     views.py
@@ -69,6 +71,7 @@ Current example:
 
 ```text
 base/Machine_learning/Additional Final exam sample questions.pdf
+base/Web_component_development/final_exam_questions.json
 ```
 
 Run import:
@@ -94,12 +97,56 @@ The importer:
 - scans every folder inside `base/`;
 - creates subjects dynamically from folder names;
 - parses every PDF with `<question>`, `<variant>`, `<variantright>`;
+- parses every JSON file with `questions` and `liveCoding` sections;
+- creates `Topic` records from JSON topics/subtopics;
 - stores questions and variants in PostgreSQL;
+- stores live coding tasks separately from multiple-choice questions;
 - calculates a SHA-256 hash per question to avoid duplicates across files and repeated imports;
+- uses stable JSON ids in hashes, so repeated imports update existing JSON records instead of duplicating them;
 - rejects malformed questions with fewer than two variants, duplicated variants, or anything other than exactly one correct answer;
 - writes an `ImportRun` with counts and parsing errors.
 
-To add a new subject, create a new folder in `base/`, put PDF files inside, then run the import command again.
+To add a new subject, create a new folder in `base/`, put PDF or JSON files inside, then run the import command again.
+
+Minimal JSON shape:
+
+```json
+{
+  "questions": [
+    {
+      "id": "Q0001",
+      "topic": "Spring Boot / Backend",
+      "subtopic": "Spring Fundamentals",
+      "question": "What does @RestController do?",
+      "options": [
+        {"id": "A", "text": "Marks a REST controller", "is_correct": true},
+        {"id": "B", "text": "Creates a database", "is_correct": false}
+      ],
+      "correct_option_id": "A",
+      "explanation": "..."
+    }
+  ],
+  "liveCoding": [
+    {
+      "id": "LC0001",
+      "topic": "Docker",
+      "task": "Write the command to check Docker version.",
+      "expected_solution_language": "shell",
+      "expected_solution": "docker --version",
+      "checking_method": {"mode": "similarity_percentage"}
+    }
+  ]
+}
+```
+
+## Topics
+
+JSON imports create typed topics:
+
+- `theory` topics for multiple-choice questions;
+- `live_coding` topics for live coding tasks.
+
+The frontend can practice the full subject or selected topics. Existing PDF questions keep working without topics, so Machine Learning remains compatible.
 
 ## Scoring
 
@@ -113,6 +160,17 @@ Points are awarded by `backend/apps/exams/services.py`:
 
 Wrong answers can reduce score repeatedly. Positive score farming is limited by `QUESTION_POINT_CAP`, and leaderboard rows only include users who have answered at least one question.
 
+Live coding scoring is separate but contributes to the same subject points:
+
+- `90-100%` similarity: up to `+15` first time, less on repeats;
+- `75-89%`: up to `+8` first time, less on repeats;
+- `50-74%`: `+3`;
+- below `50%`: `-1`;
+- positive points per live coding task are capped by `LIVE_CODING_POINT_CAP`.
+
+The checker does not execute submitted code. It normalizes commands/code and combines text similarity, token overlap, and Java/Spring keyword or annotation matching.
+Each live coding session accepts one submitted attempt per task. To retry the same task, start another live coding session; positive points remain capped per user/task.
+
 ## Question Selection
 
 The selector is weighted, not plain random:
@@ -122,6 +180,7 @@ The selector is weighted, not plain random:
 - mastered questions and repeatedly correct questions get lower weight;
 - older questions slowly regain weight;
 - modes constrain the pool first, then apply weights where appropriate.
+- optional `topic_ids` constrain the pool before mode logic and weighting.
 
 Important semantics:
 
@@ -162,7 +221,8 @@ Tests:
   {
     "subject_id": 1,
     "mode": "random",
-    "question_count": "10"
+    "question_count": "10",
+    "topic_ids": [3, 4]
   }
   ```
 
@@ -185,12 +245,46 @@ Progress:
 - `GET /api/progress/summary/`
 - `GET /api/progress/subjects/`
 - `GET /api/progress/mistakes/`
+- `GET /api/progress/live-coding/mistakes/`
 - `POST /api/progress/questions/:id/mark-mastered/`
+
+Topics:
+
+- `GET /api/subjects/:id/topics/`
+
+Live coding:
+
+- `GET /api/live-coding/tasks/?subject=<id>&topic=<id>&status=all`
+- `POST /api/live-coding/start/`
+
+  ```json
+  {
+    "subject_id": 2,
+    "mode": "random",
+    "task_count": "10",
+    "topic_ids": [8]
+  }
+  ```
+
+- `GET /api/live-coding/:id/`
+- `POST /api/live-coding/:id/submit/`
+
+  ```json
+  {
+    "task_id": 10,
+    "submitted_code": "docker --version",
+    "time_spent": 120
+  }
+  ```
+
+- `GET /api/live-coding/:id/result/`
 
 Leaderboard:
 
 - `GET /api/leaderboard/`
 - `GET /api/leaderboard/?subject=<id>`
+- `GET /api/leaderboard/?type=theory`
+- `GET /api/leaderboard/?type=live_coding`
 
 Import:
 
@@ -206,13 +300,17 @@ docker compose run --rm backend python manage.py test
 Covered areas:
 
 - tagged question parsing;
+- JSON import for theory questions, topics, answer variants, and live coding tasks;
 - duplicate-stable hashing;
 - duplicate-safe import across multiple PDF files and repeated runs;
 - weighted question selection modes;
+- topic-filtered question selection;
 - no fallback for empty `new` pools;
 - per-question point cap;
 - progress and subject stats updates after answers.
-- API edge cases for invalid test size, empty subjects, duplicate answers, and leaderboard filtering.
+- live coding similarity, solved threshold, progress updates, and point cap;
+- duplicate live coding submissions inside one session are rejected;
+- API edge cases for invalid test size, empty subjects, duplicate answers, topics, live coding, mistakes, and leaderboard filtering.
 
 ## Docker Notes
 
@@ -248,6 +346,7 @@ Use [DEPLOYMENT.md](DEPLOYMENT.md) for the step-by-step setup.
 - PDF parser preview UI with per-file validation before import.
 - Admin review queue for malformed questions.
 - More advanced spaced repetition intervals.
+- Optional sandboxed code execution for selected live coding languages.
 - Per-subject achievements and weekly leagues.
 - Email/password reset flow.
 - Full OpenAPI schema and generated frontend API types.

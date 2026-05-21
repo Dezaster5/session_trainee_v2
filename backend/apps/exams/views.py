@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.conf import settings
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Avg, Count, F, Q, Sum
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, permissions, status
@@ -12,10 +12,29 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .importer import import_questions_from_base
-from .models import DailyActivity, ImportRun, Subject, TestSession, UserQuestionProgress, UserSubjectStats
+from .live_coding_services import create_live_coding_session, submit_live_coding_attempt
+from .models import (
+    DailyActivity,
+    ImportRun,
+    LiveCodingSession,
+    LiveCodingTask,
+    Subject,
+    TestSession,
+    Topic,
+    UserLiveCodingProgress,
+    UserQuestionProgress,
+    UserSubjectStats,
+)
 from .serializers import (
     ImportRunSerializer,
     LeaderboardEntrySerializer,
+    LiveCodingAttemptSerializer,
+    LiveCodingResultSerializer,
+    LiveCodingSessionStateSerializer,
+    LiveCodingStartSerializer,
+    LiveCodingSubmitSerializer,
+    LiveCodingTaskSerializer,
+    LiveCodingWeakTaskSerializer,
     MistakeSerializer,
     RegisterSerializer,
     SubjectDetailSerializer,
@@ -25,6 +44,7 @@ from .serializers import (
     TestResultSerializer,
     TestSessionStateSerializer,
     TestStartSerializer,
+    TopicSerializer,
     UserSerializer,
 )
 from .services import (
@@ -90,6 +110,7 @@ class SubjectListView(generics.ListAPIView):
     def get_queryset(self):
         return Subject.objects.annotate(
             question_count=Count("questions", distinct=True),
+            live_coding_count=Count("live_coding_tasks", distinct=True),
             users_count=Count("questions__progress_records__user", distinct=True),
             seen_records_count=Count("questions__progress_records", distinct=True),
         ).order_by("name")
@@ -99,9 +120,21 @@ class SubjectDetailView(generics.RetrieveAPIView):
     serializer_class = SubjectDetailSerializer
     queryset = Subject.objects.annotate(
         question_count=Count("questions", distinct=True),
+        live_coding_count=Count("live_coding_tasks", distinct=True),
         users_count=Count("questions__progress_records__user", distinct=True),
         seen_records_count=Count("questions__progress_records", distinct=True),
     )
+
+
+class SubjectTopicsView(generics.ListAPIView):
+    serializer_class = TopicSerializer
+
+    def get_queryset(self):
+        subject = get_object_or_404(Subject, pk=self.kwargs["pk"])
+        return subject.topics.annotate(
+            question_count=Count("questions", distinct=True),
+            live_coding_count=Count("live_coding_tasks", distinct=True),
+        ).order_by("type", "order", "title")
 
 
 class TestStartView(APIView):
@@ -109,15 +142,28 @@ class TestStartView(APIView):
         serializer = TestStartSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         subject = get_object_or_404(Subject, pk=serializer.validated_data["subject_id"])
+        topic_ids = serializer.validated_data.get("topic_ids") or []
+        if topic_ids:
+            valid_count = Topic.objects.filter(
+                subject=subject,
+                type=Topic.TYPE_THEORY,
+                id__in=topic_ids,
+            ).count()
+            if valid_count != len(topic_ids):
+                return Response(
+                    {"detail": "One or more selected theory topics do not belong to this subject."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
         session = create_test_session(
             user=request.user,
             subject=subject,
             mode=serializer.validated_data["mode"],
             requested_count=serializer.validated_data["question_count"],
+            topic_ids=topic_ids,
         )
         if session is None:
             return Response(
-                {"detail": "No questions available for the selected mode."},
+                {"detail": "No questions available for the selected mode or topics."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(TestSessionStateSerializer(session, context={"request": request}).data, status=status.HTTP_201_CREATED)
@@ -127,7 +173,10 @@ class TestSessionDetailView(generics.RetrieveAPIView):
     serializer_class = TestSessionStateSerializer
 
     def get_queryset(self):
-        return TestSession.objects.filter(user=self.request.user).select_related("subject")
+        return TestSession.objects.filter(user=self.request.user).select_related("subject").prefetch_related(
+            "session_questions__question__topic",
+            "session_questions__question__variants",
+        )
 
 
 class TestAnswerView(APIView):
@@ -171,7 +220,7 @@ class TestResultView(generics.RetrieveAPIView):
         return (
             TestSession.objects.filter(user=self.request.user)
             .select_related("subject")
-            .prefetch_related("answers__question__variants", "answers__selected_variant")
+            .prefetch_related("answers__question__topic", "answers__question__variants", "answers__selected_variant")
         )
 
 
@@ -193,6 +242,13 @@ class ProgressSummaryView(APIView):
             .select_related("question", "question__subject")
             .order_by("-personal_weight", "last_seen_at")[:6]
         )
+        live_weak_tasks = (
+            UserLiveCodingProgress.objects.filter(user=request.user, attempts_count__gt=0)
+            .filter(Q(best_similarity__lt=80) | Q(is_solved=False))
+            .select_related("task", "task__subject", "task__topic")
+            .order_by("is_solved", "best_similarity", "-last_attempt_at")[:6]
+        )
+        recent_live_sessions = LiveCodingSession.objects.filter(user=request.user).select_related("subject")[:5]
         activity_since = timezone.now().date() - timedelta(days=29)
         activity = DailyActivity.objects.filter(user=request.user, day__gte=activity_since).order_by("day")
 
@@ -204,6 +260,7 @@ class ProgressSummaryView(APIView):
                 "last_subject": SubjectSerializer(last_session.subject).data if last_session else None,
                 "top_hard_questions": MistakeSerializer(top_hard, many=True).data,
                 "today_better_repeat": MistakeSerializer(due_questions, many=True).data,
+                "live_coding_weak_tasks": LiveCodingWeakTaskSerializer(live_weak_tasks, many=True, context={"request": request}).data,
                 "activity": [
                     {
                         "day": item.day,
@@ -229,6 +286,20 @@ class ProgressSummaryView(APIView):
                     }
                     for session in recent_sessions
                 ],
+                "recent_live_coding_sessions": [
+                    {
+                        "id": session.id,
+                        "subject": session.subject.name,
+                        "mode": session.mode,
+                        "status": session.status,
+                        "score": session.score,
+                        "average_similarity": session.average_similarity,
+                        "total_tasks": session.total_tasks,
+                        "started_at": session.started_at,
+                        "finished_at": session.finished_at,
+                    }
+                    for session in recent_live_sessions
+                ],
             }
         )
 
@@ -244,7 +315,7 @@ class MistakesView(generics.ListAPIView):
     def get_queryset(self):
         queryset = (
             UserQuestionProgress.objects.filter(user=self.request.user, times_wrong__gt=0)
-            .select_related("question", "question__subject")
+            .select_related("question", "question__subject", "question__topic")
             .prefetch_related("question__variants")
         )
         subject_id = self.request.query_params.get("subject")
@@ -287,23 +358,58 @@ class MarkQuestionMasteredView(APIView):
 class LeaderboardView(APIView):
     def get(self, request):
         subject_id = request.query_params.get("subject")
+        leaderboard_type = request.query_params.get("type", "all")
         if subject_id:
             subject = get_object_or_404(Subject, pk=subject_id)
-            rows = list(leaderboard_queryset(subject=subject)[:100])
+            rows_query = UserSubjectStats.objects.filter(subject=subject).select_related("user", "subject")
+            if leaderboard_type == "live_coding":
+                rows_query = rows_query.filter(live_coding_attempts__gt=0).order_by(
+                    "-live_coding_solved",
+                    "-average_live_coding_similarity",
+                    "-points",
+                    "user__username",
+                )
+            elif leaderboard_type == "theory":
+                rows_query = leaderboard_queryset(subject=subject)
+            else:
+                rows_query = rows_query.filter(Q(total_answered__gt=0) | Q(live_coding_attempts__gt=0)).order_by(
+                    "-points",
+                    "-unique_questions_seen",
+                    "-live_coding_solved",
+                    "user__username",
+                )
+            rows = list(rows_query[:100])
             for index, row in enumerate(rows, start=1):
                 row.rank = index
             return Response(LeaderboardEntrySerializer(rows, many=True).data)
 
+        base_rows = UserSubjectStats.objects.all()
+        if leaderboard_type == "live_coding":
+            base_rows = base_rows.filter(live_coding_attempts__gt=0)
+            ordering = ["-live_coding_solved", "-average_live_coding_similarity", "-points", "user__username"]
+        elif leaderboard_type == "theory":
+            base_rows = base_rows.filter(total_answered__gt=0)
+            ordering = ["-points", "-unique_questions_seen", "-correct_answers", "user__username"]
+        else:
+            base_rows = base_rows.filter(Q(total_answered__gt=0) | Q(live_coding_attempts__gt=0))
+            ordering = ["-points", "-unique_questions_seen", "-live_coding_solved", "user__username"]
+
         rows = (
-            UserSubjectStats.objects.filter(total_answered__gt=0)
+            base_rows
             .values("user_id", "user__username")
             .annotate(
                 points=Sum("points"),
                 total_answered=Sum("total_answered"),
                 correct_answers=Sum("correct_answers"),
                 unique_questions_seen=Sum("unique_questions_seen"),
+                live_coding_attempts=Sum("live_coding_attempts"),
+                live_coding_solved=Sum("live_coding_solved"),
+                average_live_coding_similarity=Avg(
+                    "average_live_coding_similarity",
+                    filter=Q(live_coding_attempts__gt=0),
+                ),
             )
-            .order_by("-points", "-unique_questions_seen", "-correct_answers", "user__username")[:100]
+            .order_by(*ordering)[:100]
         )
         payload = []
         for index, row in enumerate(rows, start=1):
@@ -317,10 +423,155 @@ class LeaderboardView(APIView):
                     "total_answered": total,
                     "winrate": round(correct * 100 / total, 2) if total else 0,
                     "unique_questions_seen": row["unique_questions_seen"] or 0,
+                    "live_coding_attempts": row["live_coding_attempts"] or 0,
+                    "live_coding_solved": row["live_coding_solved"] or 0,
+                    "average_live_coding_similarity": round(row["average_live_coding_similarity"] or 0, 2),
                     "subject_id": None,
                 }
             )
         return Response(payload)
+
+
+class LiveCodingTaskListView(generics.ListAPIView):
+    serializer_class = LiveCodingTaskSerializer
+
+    def get_queryset(self):
+        queryset = LiveCodingTask.objects.select_related("subject", "topic")
+        subject_id = self.request.query_params.get("subject")
+        topic_id = self.request.query_params.get("topic")
+        task_status = self.request.query_params.get("status", "all")
+
+        if subject_id:
+            queryset = queryset.filter(subject_id=subject_id)
+        if topic_id:
+            queryset = queryset.filter(topic_id=topic_id)
+
+        if task_status == "solved":
+            queryset = queryset.filter(progress_records__user=self.request.user, progress_records__is_solved=True)
+        elif task_status == "unsolved":
+            queryset = queryset.exclude(progress_records__user=self.request.user, progress_records__is_solved=True)
+        elif task_status == "weak":
+            queryset = queryset.filter(progress_records__user=self.request.user, progress_records__attempts_count__gt=0).filter(
+                Q(progress_records__best_similarity__lt=80) | Q(progress_records__is_solved=False)
+            )
+
+        ordering = self.request.query_params.get("ordering", "id")
+        allowed = {"id", "-id", "language", "-language", "difficulty", "-difficulty", "created_at", "-created_at"}
+        if ordering not in allowed:
+            ordering = "id"
+        return queryset.distinct().order_by(ordering)
+
+
+class LiveCodingStartView(APIView):
+    def post(self, request):
+        serializer = LiveCodingStartSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        subject = get_object_or_404(Subject, pk=serializer.validated_data["subject_id"])
+        topic_ids = serializer.validated_data.get("topic_ids") or []
+        if topic_ids:
+            valid_count = Topic.objects.filter(
+                subject=subject,
+                type=Topic.TYPE_LIVE_CODING,
+                id__in=topic_ids,
+            ).count()
+            if valid_count != len(topic_ids):
+                return Response(
+                    {"detail": "One or more selected live coding topics do not belong to this subject."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        session = create_live_coding_session(
+            user=request.user,
+            subject=subject,
+            mode=serializer.validated_data["mode"],
+            requested_count=serializer.validated_data["task_count"],
+            topic_ids=topic_ids,
+        )
+        if session is None:
+            return Response(
+                {"detail": "No live coding tasks available for the selected mode or topics."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(LiveCodingSessionStateSerializer(session, context={"request": request}).data, status=status.HTTP_201_CREATED)
+
+
+class LiveCodingSessionDetailView(generics.RetrieveAPIView):
+    serializer_class = LiveCodingSessionStateSerializer
+
+    def get_queryset(self):
+        return LiveCodingSession.objects.filter(user=self.request.user).select_related("subject", "topic").prefetch_related(
+            "session_tasks__task__topic",
+            "attempts__task__topic",
+        )
+
+
+class LiveCodingSubmitView(APIView):
+    def post(self, request, pk):
+        session = get_object_or_404(
+            LiveCodingSession.objects.select_related("subject", "user"),
+            pk=pk,
+            user=request.user,
+        )
+        serializer = LiveCodingSubmitSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            attempt, _progress = submit_live_coding_attempt(
+                session=session,
+                task_id=serializer.validated_data["task_id"],
+                submitted_code=serializer.validated_data["submitted_code"],
+                time_spent=serializer.validated_data.get("time_spent", 0),
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        attempt = attempt.__class__.objects.select_related("task", "task__subject", "task__topic", "session").get(pk=attempt.pk)
+        session.refresh_from_db()
+        return Response(
+            {
+                "attempt": LiveCodingAttemptSerializer(attempt, context={"request": request}).data,
+                "session": LiveCodingSessionStateSerializer(session, context={"request": request}).data,
+                "has_next": session.status == LiveCodingSession.STATUS_ACTIVE,
+            }
+        )
+
+
+class LiveCodingResultView(generics.RetrieveAPIView):
+    serializer_class = LiveCodingResultSerializer
+
+    def get_queryset(self):
+        return (
+            LiveCodingSession.objects.filter(user=self.request.user)
+            .select_related("subject", "topic")
+            .prefetch_related("attempts__task__subject", "attempts__task__topic")
+        )
+
+
+class LiveCodingMistakesView(generics.ListAPIView):
+    serializer_class = LiveCodingWeakTaskSerializer
+
+    def get_queryset(self):
+        queryset = (
+            UserLiveCodingProgress.objects.filter(user=self.request.user, attempts_count__gt=0)
+            .filter(Q(best_similarity__lt=80) | Q(is_solved=False))
+            .select_related("task", "task__subject", "task__topic")
+        )
+        subject_id = self.request.query_params.get("subject")
+        if subject_id:
+            queryset = queryset.filter(task__subject_id=subject_id)
+
+        ordering = self.request.query_params.get("ordering", "best_similarity")
+        allowed = {
+            "best_similarity",
+            "-best_similarity",
+            "last_attempt_at",
+            "-last_attempt_at",
+            "attempts_count",
+            "-attempts_count",
+        }
+        if ordering not in allowed:
+            ordering = "best_similarity"
+        return queryset.order_by(ordering)
 
 
 class ImportQuestionsView(APIView):

@@ -69,7 +69,7 @@ export default function ImportStatus() {
               <strong>{status.subjects_found}</strong>
             </div>
             <div>
-              <span>PDF</span>
+              <span>Файлы</span>
               <strong>{status.files_found}</strong>
             </div>
             <div>
@@ -83,6 +83,18 @@ export default function ImportStatus() {
             <div>
               <span>Пропущено</span>
               <strong>{status.skipped_questions}</strong>
+            </div>
+            <div>
+              <span>Live coding</span>
+              <strong>{status.imported_live_coding_tasks || 0}</strong>
+            </div>
+            <div>
+              <span>Live дубликаты</span>
+              <strong>{status.duplicate_live_coding_tasks || 0}</strong>
+            </div>
+            <div>
+              <span>Live пропущено</span>
+              <strong>{status.skipped_live_coding_tasks || 0}</strong>
             </div>
             <div>
               <span>Завершен</span>

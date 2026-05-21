@@ -4,11 +4,17 @@ from .models import (
     AnswerVariant,
     DailyActivity,
     ImportRun,
+    LiveCodingAttempt,
+    LiveCodingSession,
+    LiveCodingSessionTask,
+    LiveCodingTask,
     Question,
     Subject,
     TestAnswer,
     TestSession,
     TestSessionQuestion,
+    Topic,
+    UserLiveCodingProgress,
     UserQuestionProgress,
     UserSubjectStats,
 )
@@ -21,8 +27,8 @@ class AnswerVariantInline(admin.TabularInline):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ("id", "subject", "short_text", "source_file", "created_at")
-    list_filter = ("subject", "source_file")
+    list_display = ("id", "subject", "topic", "short_text", "import_format", "source_file", "created_at")
+    list_filter = ("subject", "topic", "import_format", "source_file")
     search_fields = ("text", "hash")
     inlines = [AnswerVariantInline]
 
@@ -34,6 +40,20 @@ class QuestionAdmin(admin.ModelAdmin):
 class SubjectAdmin(admin.ModelAdmin):
     list_display = ("id", "name", "slug", "imported_at", "created_at")
     search_fields = ("name", "slug")
+
+
+@admin.register(Topic)
+class TopicAdmin(admin.ModelAdmin):
+    list_display = ("id", "subject", "title", "type", "order")
+    list_filter = ("subject", "type")
+    search_fields = ("title", "slug")
+
+
+@admin.register(LiveCodingTask)
+class LiveCodingTaskAdmin(admin.ModelAdmin):
+    list_display = ("id", "subject", "topic", "title", "language", "difficulty", "created_at")
+    list_filter = ("subject", "topic", "language", "difficulty")
+    search_fields = ("title", "prompt", "expected_solution", "hash")
 
 
 @admin.register(UserQuestionProgress)
@@ -57,5 +77,9 @@ admin.site.register(TestSession)
 admin.site.register(TestSessionQuestion)
 admin.site.register(TestAnswer)
 admin.site.register(UserSubjectStats)
+admin.site.register(UserLiveCodingProgress)
+admin.site.register(LiveCodingSession)
+admin.site.register(LiveCodingSessionTask)
+admin.site.register(LiveCodingAttempt)
 admin.site.register(DailyActivity)
 admin.site.register(ImportRun)

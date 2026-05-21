@@ -91,8 +91,17 @@ def weighted_sample_without_replacement(items, count, weight_getter):
     return selected
 
 
-def base_queryset_for_mode(user, subject, mode):
+def normalized_topic_ids(topic_ids):
+    if not topic_ids:
+        return []
+    return [int(topic_id) for topic_id in topic_ids if str(topic_id).strip()]
+
+
+def base_queryset_for_mode(user, subject, mode, topic_ids=None):
     queryset = Question.objects.filter(subject=subject).prefetch_related("variants")
+    topic_ids = normalized_topic_ids(topic_ids)
+    if topic_ids:
+        queryset = queryset.filter(topic_id__in=topic_ids)
 
     if mode == TestSession.MODE_NEW:
         return queryset.exclude(progress_records__user=user)
@@ -109,8 +118,8 @@ def base_queryset_for_mode(user, subject, mode):
     return queryset
 
 
-def select_questions(user, subject, mode, requested_count):
-    queryset = base_queryset_for_mode(user, subject, mode)
+def select_questions(user, subject, mode, requested_count, topic_ids=None):
+    queryset = base_queryset_for_mode(user, subject, mode, topic_ids=topic_ids)
     questions = list(queryset)
 
     if not questions:
@@ -150,8 +159,8 @@ def select_questions(user, subject, mode, requested_count):
 
 
 @transaction.atomic
-def create_test_session(user, subject, mode, requested_count):
-    questions = select_questions(user, subject, mode, requested_count)
+def create_test_session(user, subject, mode, requested_count, topic_ids=None):
+    questions = select_questions(user, subject, mode, requested_count, topic_ids=topic_ids)
     if not questions:
         return None
 
@@ -367,11 +376,23 @@ def aggregate_user_totals(user):
         wrong_answers=Sum("wrong_answers"),
         points=Sum("points"),
         unique_questions_seen=Sum("unique_questions_seen"),
+        live_coding_attempts=Sum("live_coding_attempts"),
+        live_coding_solved=Sum("live_coding_solved"),
     )
     total = stats["total_answered"] or 0
     correct = stats["correct_answers"] or 0
     stats = {key: value or 0 for key, value in stats.items()}
     stats["winrate"] = round(correct * 100 / total, 2) if total else 0
+    similarity_rows = UserSubjectStats.objects.filter(
+        user=user,
+        live_coding_attempts__gt=0,
+    ).values("live_coding_attempts", "average_live_coding_similarity")
+    total_attempts = sum(row["live_coding_attempts"] for row in similarity_rows)
+    weighted_similarity = sum(
+        row["average_live_coding_similarity"] * row["live_coding_attempts"]
+        for row in similarity_rows
+    )
+    stats["average_live_coding_similarity"] = round(weighted_similarity / total_attempts, 2) if total_attempts else 0
     return stats
 
 
@@ -383,10 +404,14 @@ def subject_progress_rows(user):
     }
     from .models import Subject
 
-    subjects = Subject.objects.annotate(question_count=Count("questions")).order_by("name")
+    subjects = Subject.objects.annotate(
+        question_count=Count("questions", distinct=True),
+        live_coding_count=Count("live_coding_tasks", distinct=True),
+    ).order_by("name")
     for subject in subjects:
         stat = stats_map.get(subject.id)
         question_count = subject.question_count or 0
+        live_coding_count = subject.live_coding_count or 0
         unique_seen = stat.unique_questions_seen if stat else 0
         rows.append(
             {
@@ -394,11 +419,15 @@ def subject_progress_rows(user):
                 "subject_name": subject.name,
                 "slug": subject.slug,
                 "question_count": question_count,
+                "live_coding_count": live_coding_count,
                 "unique_questions_seen": unique_seen,
                 "completion_percent": round(unique_seen * 100 / question_count, 2) if question_count else 0,
                 "total_answered": stat.total_answered if stat else 0,
                 "correct_answers": stat.correct_answers if stat else 0,
                 "wrong_answers": stat.wrong_answers if stat else 0,
+                "live_coding_attempts": stat.live_coding_attempts if stat else 0,
+                "live_coding_solved": stat.live_coding_solved if stat else 0,
+                "average_live_coding_similarity": stat.average_live_coding_similarity if stat else 0,
                 "winrate": stat.winrate if stat else 0,
                 "points": stat.points if stat else 0,
                 "last_activity_at": stat.last_activity_at if stat else None,

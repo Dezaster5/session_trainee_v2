@@ -3,6 +3,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clock3,
+  Code2,
   Play,
   Sparkles,
   Target,
@@ -148,6 +149,7 @@ export default function Dashboard() {
         <StatCard label="Правильно" value={totals.correct_answers || 0} hint="точных ответов" icon={CheckCircle2} tone="green" />
         <StatCard label="Ошибки" value={totals.wrong_answers || 0} hint="для повторения" icon={XCircle} tone="red" />
         <StatCard label="Winrate" value={formatPercent(totals.winrate)} hint="личная точность" icon={TrendingUp} tone="amber" />
+        <StatCard label="Live coding" value={totals.live_coding_attempts || 0} hint={`${totals.live_coding_solved || 0} solved`} icon={Code2} tone="blue" />
         <StatCard label="Очки" value={totals.points || 0} hint="рейтинг" icon={Trophy} tone="teal" />
       </section>
 
@@ -206,6 +208,32 @@ export default function Dashboard() {
             </div>
           ) : (
             <EmptyState title="Нет срочных повторений" text="Можно пройти новые вопросы" />
+          )}
+        </div>
+
+        <div className="panel">
+          <div className="panel-header">
+            <h2>Live coding weak</h2>
+            <Link to="/mistakes" className="ghost-link">
+              Все <ArrowRight size={16} />
+            </Link>
+          </div>
+          {summary?.live_coding_weak_tasks?.length ? (
+            <div className="compact-list">
+              {summary.live_coding_weak_tasks.map((item) => (
+                <Link
+                  key={item.task.id}
+                  to={`/subjects/${item.subject_id}/live-coding?mode=mistakes${item.topic?.id ? `&topic=${item.topic.id}` : ""}`}
+                  className="compact-item"
+                >
+                  <Code2 size={17} />
+                  <span>{item.task.title}</span>
+                  <small>{formatPercent(item.best_similarity)}</small>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title="Нет слабых задач" text="Live coding рекомендации появятся после попыток" />
           )}
         </div>
 

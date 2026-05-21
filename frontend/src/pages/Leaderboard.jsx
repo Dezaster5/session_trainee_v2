@@ -10,6 +10,7 @@ import { formatPercent } from "../utils/format";
 export default function Leaderboard() {
   const [subjects, setSubjects] = useState([]);
   const [subject, setSubject] = useState("");
+  const [type, setType] = useState("all");
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -21,15 +22,22 @@ export default function Leaderboard() {
   useEffect(() => {
     setLoading(true);
     setError("");
-    const suffix = subject ? `?subject=${subject}` : "";
+    const params = new URLSearchParams();
+    if (subject) params.set("subject", subject);
+    if (type !== "all") params.set("type", type);
+    const suffix = params.toString() ? `?${params.toString()}` : "";
     api
       .get(`/leaderboard/${suffix}`)
       .then((response) => setRows(response.data))
       .catch(() => setError("Не удалось загрузить рейтинг"))
       .finally(() => setLoading(false));
-  }, [subject]);
+  }, [subject, type]);
 
   const podium = rows.slice(0, 3);
+  const metricLabel = (row) =>
+    type === "live_coding"
+      ? `${row.live_coding_solved || 0} solved · ${formatPercent(row.average_live_coding_similarity || 0)}`
+      : `${formatPercent(row.winrate)} · ${row.unique_questions_seen} уникальных`;
 
   return (
     <div className="page-stack">
@@ -50,6 +58,11 @@ export default function Leaderboard() {
             </option>
           ))}
         </select>
+        <select value={type} onChange={(event) => setType(event.target.value)}>
+          <option value="all">Все активности</option>
+          <option value="theory">Theory</option>
+          <option value="live_coding">Live coding</option>
+        </select>
       </section>
 
       {loading ? (
@@ -67,7 +80,7 @@ export default function Leaderboard() {
                 </div>
                 <strong>{row.username}</strong>
                 <span>{row.points} очков</span>
-                <small>{formatPercent(row.winrate)} · {row.unique_questions_seen} уникальных</small>
+                <small>{metricLabel(row)}</small>
               </article>
             ))}
           </section>
@@ -82,6 +95,7 @@ export default function Leaderboard() {
                     <th>Решено</th>
                     <th>Winrate</th>
                     <th>Уникальные</th>
+                    <th>Live solved</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -99,6 +113,10 @@ export default function Leaderboard() {
                       <td>{row.total_answered}</td>
                       <td>{formatPercent(row.winrate)}</td>
                       <td>{row.unique_questions_seen}</td>
+                      <td>
+                        {row.live_coding_solved || 0}
+                        {row.average_live_coding_similarity ? ` · ${formatPercent(row.average_live_coding_similarity)}` : ""}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
