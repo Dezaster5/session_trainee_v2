@@ -71,6 +71,7 @@ Current example:
 
 ```text
 base/Machine_learning/Additional Final exam sample questions.pdf
+base/Sociology/sociology_exam_questions.json
 base/Web_component_development/final_exam_questions.json
 ```
 
@@ -103,7 +104,8 @@ The importer:
 - stores live coding tasks separately from multiple-choice questions;
 - calculates a SHA-256 hash per question to avoid duplicates across files and repeated imports;
 - uses stable JSON ids in hashes, so repeated imports update existing JSON records instead of duplicating them;
-- rejects malformed questions with fewer than two variants, duplicated variants, or anything other than exactly one correct answer;
+- rejects malformed PDF questions with fewer than two variants, duplicated variants, or anything other than exactly one correct answer;
+- rejects malformed JSON multiple-choice questions unless they have exactly four variants and exactly one correct answer;
 - writes an `ImportRun` with counts and parsing errors.
 
 To add a new subject, create a new folder in `base/`, put PDF or JSON files inside, then run the import command again.
@@ -120,7 +122,9 @@ Minimal JSON shape:
       "question": "What does @RestController do?",
       "options": [
         {"id": "A", "text": "Marks a REST controller", "is_correct": true},
-        {"id": "B", "text": "Creates a database", "is_correct": false}
+        {"id": "B", "text": "Creates a database", "is_correct": false},
+        {"id": "C", "text": "Configures the JVM only", "is_correct": false},
+        {"id": "D", "text": "Marks a JPA relation only", "is_correct": false}
       ],
       "correct_option_id": "A",
       "explanation": "..."
@@ -138,6 +142,56 @@ Minimal JSON shape:
   ]
 }
 ```
+
+### Sociology JSON import
+
+The Sociology base is stored at:
+
+```text
+base/Sociology/sociology_exam_questions.json
+```
+
+It uses the same JSON importer as Web Component Development:
+
+```json
+{
+  "questions": [
+    {
+      "id": "SOC-Q0001",
+      "topic": "Foundations of Sociology and Scientific Knowledge",
+      "subtopic": "Sociology as Science, Positivism, Ethics and Research Logic",
+      "question": "Sociology as a science is product of",
+      "type": "multiple_choice_manual_answer_practice",
+      "options": [
+        {"id": "A", "text": "Classical antiquity and its moral philosophy", "is_correct": false},
+        {"id": "B", "text": "Modernity and the industrial transformation of society", "is_correct": true},
+        {"id": "C", "text": "Medieval scholastic theology", "is_correct": false},
+        {"id": "D", "text": "Post-industrial digital culture", "is_correct": false}
+      ],
+      "correct_option_id": "B",
+      "correct_answer": "Modernity and the industrial transformation of society",
+      "explanation": ""
+    }
+  ],
+  "liveCoding": []
+}
+```
+
+Import it with the standard command:
+
+```bash
+docker compose run --rm backend python manage.py import_questions
+```
+
+Expected result for Sociology:
+
+- subject name: `Sociology`;
+- theory questions: `67`;
+- live coding tasks: `0`;
+- every question has exactly four answer variants and exactly one correct answer;
+- topics are created from `topic` + `subtopic`;
+- `is_correct` should be a JSON boolean; string values such as `"true"`/`"false"` are normalized defensively;
+- repeated imports update existing JSON questions by stable id/hash instead of creating duplicates.
 
 ## Topics
 

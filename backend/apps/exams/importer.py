@@ -64,6 +64,14 @@ def stable_slug(value, fallback="item"):
     return slugify(normalize_text(value))[:220] or fallback
 
 
+def parse_json_bool(value):
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().casefold() in {"1", "true", "yes", "y"}
+    return bool(value)
+
+
 def topic_title_from_json(item, default="General"):
     topic = normalize_text(item.get("topic") or default)
     subtopic = normalize_text(item.get("subtopic") or "")
@@ -211,7 +219,7 @@ def parse_json_questions(data):
             if isinstance(option, dict):
                 option_id = normalize_text(option.get("id") or "").casefold()
                 text = normalize_text(option.get("text") or option.get("value") or "")
-                is_correct = bool(option.get("is_correct")) or bool(correct_option_id and option_id == correct_option_id)
+                is_correct = parse_json_bool(option.get("is_correct")) or bool(correct_option_id and option_id == correct_option_id)
             else:
                 text = normalize_text(option)
                 is_correct = False
@@ -264,13 +272,15 @@ def parse_json_live_coding(data):
     return parsed
 
 
-def validate_question(question):
+def validate_question(question, exact_variant_count=None):
     variants = [variant for variant in question.get("variants", []) if variant.get("text")]
     correct_count = sum(1 for variant in variants if variant.get("is_correct"))
     normalized_variants = [normalize_text(variant["text"]).casefold() for variant in variants]
 
     if not question.get("text"):
         return False, "empty question text"
+    if exact_variant_count is not None and len(variants) != exact_variant_count:
+        return False, f"question must have exactly {exact_variant_count} variants, found {len(variants)}"
     if len(variants) < 2:
         return False, "question has less than two variants"
     if correct_count != 1:
@@ -337,7 +347,7 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
             summary.errors.append(f"{path} question #{index}: {parsed_question['error']}")
             continue
 
-        is_valid, reason = validate_question(parsed_question)
+        is_valid, reason = validate_question(parsed_question, exact_variant_count=4)
         if not is_valid:
             summary.skipped_questions += 1
             summary.errors.append(f"{path} question #{index}: {reason}")

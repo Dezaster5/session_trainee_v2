@@ -8,7 +8,14 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from .importer import import_questions_from_base, parse_json_live_coding, parse_tagged_questions, question_hash, validate_question
+from .importer import (
+    import_questions_from_base,
+    parse_json_live_coding,
+    parse_json_questions,
+    parse_tagged_questions,
+    question_hash,
+    validate_question,
+)
 from .live_coding_services import (
     calculate_final_similarity,
     create_live_coding_session,
@@ -173,6 +180,30 @@ class JsonImportTests(TestCase):
         self.assertIn("\n    void run()", parsed[0]["expected_solution"])
         self.assertIn("\n        System.out.println", parsed[0]["expected_solution"])
 
+    def test_json_question_parser_handles_string_false_flags(self):
+        parsed = parse_json_questions(
+            {
+                "questions": [
+                    {
+                        "id": "QBOOL",
+                        "topic": "Sociology",
+                        "question": "Which option is correct?",
+                        "options": [
+                            {"id": "A", "text": "Wrong A", "is_correct": "false"},
+                            {"id": "B", "text": "Right B", "is_correct": "true"},
+                            {"id": "C", "text": "Wrong C", "is_correct": "false"},
+                            {"id": "D", "text": "Wrong D", "is_correct": "false"},
+                        ],
+                    }
+                ]
+            }
+        )
+
+        self.assertEqual(
+            [variant["text"] for variant in parsed[0]["variants"] if variant["is_correct"]],
+            ["Right B"],
+        )
+
     def test_imports_json_questions_topics_and_live_coding_without_duplicates(self):
         payload = {
             "questions": [
@@ -184,6 +215,8 @@ class JsonImportTests(TestCase):
                     "options": [
                         {"id": "A", "text": "Marks a REST controller", "is_correct": True},
                         {"id": "B", "text": "Creates a database", "is_correct": False},
+                        {"id": "C", "text": "Configures the JVM garbage collector", "is_correct": False},
+                        {"id": "D", "text": "Marks a JPA relationship only", "is_correct": False},
                     ],
                     "correct_option_id": "A",
                     "explanation": "It combines controller and response body behavior.",
@@ -217,7 +250,7 @@ class JsonImportTests(TestCase):
         self.assertEqual(Topic.objects.filter(subject=subject, type=Topic.TYPE_THEORY).count(), 1)
         self.assertEqual(Topic.objects.filter(subject=subject, type=Topic.TYPE_LIVE_CODING).count(), 1)
         self.assertEqual(question.import_format, Question.FORMAT_JSON)
-        self.assertEqual(question.variants.count(), 2)
+        self.assertEqual(question.variants.count(), 4)
         self.assertEqual(question.variants.get(is_correct=True).text, "Marks a REST controller")
         self.assertEqual(task.expected_solution, "docker --version")
         self.assertEqual(first.imported_questions, 1)
@@ -226,6 +259,115 @@ class JsonImportTests(TestCase):
         self.assertEqual(second.imported_live_coding_tasks, 0)
         self.assertEqual(Question.objects.count(), 1)
         self.assertEqual(LiveCodingTask.objects.count(), 1)
+
+    def test_imports_sociology_json_fixture_without_duplicates(self):
+        source = settings.BASE_QUESTIONS_DIR / "Sociology" / "sociology_exam_questions.json"
+        payload = json.loads(source.read_text(encoding="utf-8"))
+
+        with TemporaryDirectory() as tmp:
+            subject_dir = Path(tmp) / "Sociology"
+            subject_dir.mkdir()
+            (subject_dir / "sociology_exam_questions.json").write_text(json.dumps(payload), encoding="utf-8")
+
+            first = import_questions_from_base(tmp)
+            second = import_questions_from_base(tmp)
+
+        subject = Subject.objects.get(slug="sociology")
+        questions = Question.objects.filter(subject=subject).prefetch_related("variants")
+
+        self.assertEqual(subject.name, "Sociology")
+        self.assertEqual(first.imported_questions, 67)
+        self.assertEqual(first.imported_live_coding_tasks, 0)
+        self.assertEqual(second.imported_questions, 0)
+        self.assertEqual(second.duplicate_questions, 67)
+        self.assertEqual(questions.count(), 67)
+        self.assertTrue(Topic.objects.filter(subject=subject, type=Topic.TYPE_THEORY).exists())
+        self.assertFalse(LiveCodingTask.objects.filter(subject=subject).exists())
+
+        for question in questions:
+            self.assertEqual(question.import_format, Question.FORMAT_JSON)
+            self.assertEqual(question.source_file, "Sociology/sociology_exam_questions.json")
+            self.assertEqual(question.variants.count(), 4)
+            self.assertEqual(question.variants.filter(is_correct=True).count(), 1)
+
+        first_question = Question.objects.get(hash__isnull=False, text="Sociology as a science is product of")
+        self.assertEqual(
+            first_question.topic.title,
+            "Foundations of Sociology and Scientific Knowledge · Sociology as Science, Positivism, Ethics and Research Logic",
+        )
+
+    def test_sociology_questions_work_in_test_flow_and_leaderboard(self):
+        source = settings.BASE_QUESTIONS_DIR / "Sociology" / "sociology_exam_questions.json"
+        payload = json.loads(source.read_text(encoding="utf-8"))
+
+        with TemporaryDirectory() as tmp:
+            subject_dir = Path(tmp) / "Sociology"
+            subject_dir.mkdir()
+            (subject_dir / "sociology_exam_questions.json").write_text(json.dumps(payload), encoding="utf-8")
+            import_questions_from_base(tmp)
+
+        subject = Subject.objects.get(slug="sociology")
+        user = User.objects.create_user(username="sociology-student", password="strong-pass-123")
+        client = APIClient()
+        client.force_authenticate(user)
+
+        start = client.post(
+            "/api/tests/start/",
+            {"subject_id": subject.id, "mode": "review_all", "question_count": "5"},
+            format="json",
+        )
+
+        self.assertEqual(start.status_code, 201)
+        self.assertEqual(start.data["subject"]["id"], subject.id)
+        self.assertEqual(start.data["total_questions"], 5)
+
+        question_id = start.data["current_question"]["question"]["id"]
+        correct_variant = AnswerVariant.objects.get(question_id=question_id, is_correct=True)
+        answer = client.post(
+            f"/api/tests/{start.data['id']}/answer/",
+            {"question_id": question_id, "selected_variant_id": correct_variant.id, "time_spent": 9},
+            format="json",
+        )
+        summary = client.get("/api/progress/summary/")
+        leaderboard = client.get("/api/leaderboard/")
+
+        self.assertEqual(answer.status_code, 200)
+        self.assertTrue(answer.data["answer"]["is_correct"])
+        self.assertEqual(UserQuestionProgress.objects.get(user=user, question_id=question_id).times_correct, 1)
+        self.assertEqual(UserSubjectStats.objects.get(user=user, subject=subject).correct_answers, 1)
+        self.assertEqual(summary.status_code, 200)
+        self.assertTrue(any(row["subject_id"] == subject.id for row in summary.data["subjects"]))
+        self.assertEqual(leaderboard.status_code, 200)
+        self.assertIn("sociology-student", [row["username"] for row in leaderboard.data])
+
+    def test_json_import_rejects_questions_without_four_variants(self):
+        payload = {
+            "questions": [
+                {
+                    "id": "SOC-BAD-1",
+                    "topic": "Sociology",
+                    "question": "Invalid question",
+                    "options": [
+                        {"id": "A", "text": "One", "is_correct": True},
+                        {"id": "B", "text": "Two", "is_correct": False},
+                        {"id": "C", "text": "Three", "is_correct": False},
+                    ],
+                    "correct_option_id": "A",
+                }
+            ],
+            "liveCoding": [],
+        }
+
+        with TemporaryDirectory() as tmp:
+            subject_dir = Path(tmp) / "Sociology"
+            subject_dir.mkdir()
+            (subject_dir / "bad.json").write_text(json.dumps(payload), encoding="utf-8")
+
+            summary = import_questions_from_base(tmp)
+
+        self.assertEqual(summary.imported_questions, 0)
+        self.assertEqual(summary.skipped_questions, 1)
+        self.assertIn("exactly 4 variants", summary.errors[0])
 
 
 class TestSelectionAndScoringTests(TestCase):
