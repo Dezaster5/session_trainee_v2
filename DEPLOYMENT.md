@@ -98,9 +98,10 @@ AUTO_IMPORT_QUESTIONS=1
 ```
 
 4. Redeploy the backend.
-5. After successful deploy, you can either keep it enabled or set it back to `0`.
+5. After the first successful import, set `AUTO_IMPORT_QUESTIONS` back to `0` and redeploy.
 
 Repeated imports are safe: existing questions are detected by hash and skipped as duplicates.
+Automatic import starts in the background so Render can detect the web port immediately.
 
 ## 6. Vercel Frontend
 
@@ -163,4 +164,5 @@ Send them the Vercel URL. They should register their own accounts. Progress and 
 - `DisallowedHost`: add the backend domain to `ALLOWED_HOSTS`.
 - Frontend still calls localhost: update `VITE_API_URL` on Vercel and redeploy.
 - No questions in production: run `python manage.py import_questions` in Render Shell.
+- Render says `No open ports detected`: make sure this is a Web Service with start command `cd backend && bash start.sh`. Do not use `python manage.py import_questions` as the start command; use `AUTO_IMPORT_QUESTIONS=1` for one redeploy instead.
 - Render free service sleeps: first request can be slow.

@@ -87,6 +87,8 @@ On Render, if Shell is not available, set this backend environment variable and 
 AUTO_IMPORT_QUESTIONS=1
 ```
 
+After the first successful production import, set it back to `0` and redeploy. The import runs in the background on Render so the web service can bind to its port first.
+
 Dry run:
 
 ```bash

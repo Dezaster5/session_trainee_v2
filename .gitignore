@@ -7,3 +7,4 @@ frontend/node_modules/
 frontend/dist/
 .pytest_cache/
 .coverage
+not_active.json
