@@ -1,57 +1,68 @@
 {
+  "subject": {
+    "name": "Sociology",
+    "slug": "sociology",
+    "source_file": "Final tests_Sociology.docx",
+    "question_count": 67
+  },
   "questions": [
     {
       "id": "SOC-Q0001",
-      "topic": "Foundations of Sociology and Scientific Knowledge",
-      "subtopic": "Sociology as Science, Positivism, Ethics and Research Logic",
+      "number": 1,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "Sociology as a science is product of",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "Classical antiquity and its moral philosophy",
+          "text": "Premodernity",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "Modernity and the industrial transformation of society",
+          "text": "Modernity",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "Medieval scholastic theology",
+          "text": "Postmodernity",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "Post-industrial digital culture",
+          "text": "Metamodernity",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "Modernity and the industrial transformation of society",
-      "explanation": ""
+      "correct_answer": "Modernity",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0002",
-      "topic": "Foundations of Sociology and Scientific Knowledge",
-      "subtopic": "Sociology as Science, Positivism, Ethics and Research Logic",
+      "number": 2,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "Founder of sociology O. Comte was also the founder of",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "phenomenological sociology",
+          "text": "phenomenology",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "structural functionalism",
+          "text": "structuralism",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "historical materialism",
+          "text": "conflict approach",
           "is_correct": false
         },
         {
@@ -62,151 +73,166 @@
       ],
       "correct_option_id": "D",
       "correct_answer": "positivism",
-      "explanation": ""
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0003",
-      "topic": "Foundations of Sociology and Scientific Knowledge",
-      "subtopic": "Sociology as Science, Positivism, Ethics and Research Logic",
+      "number": 3,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "What are the criteria of scientific knowledge according to O.Comte",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "internal logical elegance without empirical testing",
+          "text": "falsifiability",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "measurability and empirical grounding",
+          "text": "Measurability and empirically based",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "agreement with moral tradition and authority",
+          "text": "All answers are wrong",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "usefulness for political ideology",
+          "text": "all answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "measurability and empirical grounding",
-      "explanation": ""
+      "correct_answer": "Measurability and empirically based",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0004",
-      "topic": "Foundations of Sociology and Scientific Knowledge",
-      "subtopic": "Sociology as Science, Positivism, Ethics and Research Logic",
+      "number": 4,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "Which criterion for scientific knowledge did K. Popper propose as an alternative to verification?",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "verification through repeated confirmation",
+          "text": "measurability",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "falsifiability of scientific statements",
+          "text": "falsifiability",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "interpretive understanding of motives",
+          "text": "empiricaly based",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "operationalization of abstract concepts",
+          "text": "all answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "falsifiability of scientific statements",
-      "explanation": ""
+      "correct_answer": "falsifiability",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0005",
-      "topic": "Foundations of Sociology and Scientific Knowledge",
-      "subtopic": "Sociology as Science, Positivism, Ethics and Research Logic",
+      "number": 5,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "The term sociological imagination was suggested by",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "C. Wright Mills",
+          "text": "C.W.Mills",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "Robert K. Merton",
+          "text": "K.Popper",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "Talcott Parsons",
+          "text": "E. Giddens",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "Anthony Giddens",
+          "text": "O.Comte",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "C. Wright Mills",
-      "explanation": ""
+      "correct_answer": "C.W.Mills",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0006",
-      "topic": "Foundations of Sociology and Scientific Knowledge",
-      "subtopic": "Sociology as Science, Positivism, Ethics and Research Logic",
+      "number": 6,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "Phrase \"The aim does not justify the means\" describes the ethical principles in research",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "It allows any method if the research topic is socially important",
+          "text": "False",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "It means research goals cannot excuse harmful or unethical methods",
+          "text": "True",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "It applies only to medical experiments, not to sociological research",
+          "text": "Not given",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "It says ethical review is unnecessary when data are anonymous",
+          "text": "all answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "It means research goals cannot excuse harmful or unethical methods",
-      "explanation": ""
+      "correct_answer": "True",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0007",
-      "topic": "Foundations of Sociology and Scientific Knowledge",
-      "subtopic": "Sociology as Science, Positivism, Ethics and Research Logic",
+      "number": 7,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "Four sociological questions in research",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "who, how many, how much, with what effect?",
+          "text": "What, how, when, for what reason?",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "how, who, what, with which method?",
+          "text": "How, who, what, why?",
           "is_correct": false
         },
         {
@@ -216,1074 +242,1176 @@
         },
         {
           "id": "D",
-          "text": "which theory, which sample, which index, which source?",
+          "text": "Who, what, why, which?",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
       "correct_answer": "what, where, when, why?",
-      "explanation": ""
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0008",
-      "topic": "Foundations of Sociology and Scientific Knowledge",
-      "subtopic": "Sociology as Science, Positivism, Ethics and Research Logic",
+      "number": 8,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "A logical mistake where several isolated cases are presented as a universal rule is called",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "measurement error caused by a poorly defined indicator",
+          "text": "perceptual error",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "substitution of correlation for causality",
+          "text": "substitution of correlation and causality",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "sampling mistake based on overgeneralizing isolated cases",
+          "text": "sampling mistake",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "operationalization error in translating a concept into variables",
+          "text": "all answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "sampling mistake based on overgeneralizing isolated cases",
-      "explanation": ""
+      "correct_answer": "sampling mistake",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0009",
-      "topic": "Research Methods and Theory",
-      "subtopic": "Qualitative and Quantitative Methods, Facts and Theory",
+      "number": 9,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "Bibliography, visual, field methods, content analysis can be combined into a group",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "quantitative methods focused on numerical indicators",
+          "text": "Quantitative methods",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "qualitative methods focused on meaning and context",
+          "text": "Qualitative methods",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "experimental methods based on controlled intervention",
+          "text": "Fieldwork",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "demographic methods based only on population registers",
+          "text": "all answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "qualitative methods focused on meaning and context",
-      "explanation": ""
+      "correct_answer": "Qualitative methods",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0010",
-      "topic": "Research Methods and Theory",
-      "subtopic": "Qualitative and Quantitative Methods, Facts and Theory",
+      "number": 10,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "Statistics, survey, network analysis, content analysis can be combined into a group",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "qualitative interpretation of lived experience",
+          "text": "Qualitative methods",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "quantitative methods using numerical data and measurement",
+          "text": "Quantitative methods",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "purely historical methods based on archival narratives",
+          "text": "Fieldwork",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "ethnographic methods based only on participant observation",
+          "text": "all answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "quantitative methods using numerical data and measurement",
-      "explanation": ""
+      "correct_answer": "Quantitative methods",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0011",
-      "topic": "Research Methods and Theory",
-      "subtopic": "Qualitative and Quantitative Methods, Facts and Theory",
+      "number": 11,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "Research methods are applied for searching",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "facts that can support or challenge sociological claims",
+          "text": "Facts",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "normative judgments about how society should be organized",
+          "text": "Theories",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "ideological slogans that replace empirical evidence",
+          "text": "Perspectives",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "personal impressions that do not require verification",
+          "text": "Paradigms",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "facts that can support or challenge sociological claims",
-      "explanation": ""
+      "correct_answer": "Facts",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0012",
-      "topic": "Research Methods and Theory",
-      "subtopic": "Qualitative and Quantitative Methods, Facts and Theory",
+      "number": 12,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "The interpretation of relationship between a large number of facts and data collected in a research called",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "a single empirical fact",
+          "text": "Fact",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "a theory explaining relationships among collected facts",
+          "text": "Theory",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "a research instrument used to collect answers",
+          "text": "Perspective",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "a sample drawn from the general population",
+          "text": "Paradigm",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "a theory explaining relationships among collected facts",
-      "explanation": ""
+      "correct_answer": "Theory",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0013",
-      "topic": "Sociological Paradigms and Classical Thinkers",
-      "subtopic": "Paradigms, Perspectives, Comte, Durkheim, Weber and Marx",
+      "number": 13,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "According to Thomas Kuhn “The structure of scientifical revolutions” (1962) the theories of Einstein and Newton in physics formed new",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "a universal law that never changes",
+          "text": "Sense",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "a survey technique for measuring attitudes",
+          "text": "Groups",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "a hypothesis tested in one experiment",
+          "text": "Universities",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "a paradigm that organizes scientific thinking",
+          "text": "Paradigm",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "a paradigm that organizes scientific thinking",
-      "explanation": ""
+      "correct_answer": "Paradigm",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0014",
-      "topic": "Sociological Paradigms and Classical Thinkers",
-      "subtopic": "Paradigms, Perspectives, Comte, Durkheim, Weber and Marx",
+      "number": 14,
+      "subject": "Sociology",
+      "topic": "Sociology as science and research basics",
+      "subtopic": "",
       "question": "Representatives of philosophy in which knowledge begins from metaphysics, an act of faith that people can trust their senses and world around is not an illusion.",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "Aristotle and Thomas Aquinas, associated with realism",
+          "text": "Aristotle and Thomas Aquinas (realism)",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "Nietzsche and Freud, associated with modern critique of reason",
+          "text": "Friedrich Nietzsche, Sigmund Freud, Ludwig Wittgenstein, Martin Heidegger (modern)",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "Foucault and Derrida, associated with postmodern critique",
+          "text": "Michel Foucault, Jacques Derrida, Jean-François Lyotard, Jean Baudrillard (postmodern)",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "Comte and Durkheim, associated with positivist sociology",
+          "text": "All answers are false",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "Aristotle and Thomas Aquinas, associated with realism",
-      "explanation": ""
+      "correct_answer": "Aristotle and Thomas Aquinas (realism)",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0015",
-      "topic": "Sociological Paradigms and Classical Thinkers",
-      "subtopic": "Paradigms, Perspectives, Comte, Durkheim, Weber and Marx",
+      "number": 15,
+      "subject": "Sociology",
+      "topic": "Sociological perspectives and social change",
+      "subtopic": "",
       "question": "Perspectives in the sociology:",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "functionalism as the only macro-level perspective",
+          "text": "Functionalism",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "functionalism, conflict theory and symbolic interactionism",
+          "text": "All are correct",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "positivism, realism and empiricism as research ethics",
+          "text": "Conflict",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "survey, ethnography and content analysis as perspectives",
+          "text": "Symbolic interactionism",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "functionalism, conflict theory and symbolic interactionism",
-      "explanation": ""
+      "correct_answer": "All are correct",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0016",
-      "topic": "Sociological Paradigms and Classical Thinkers",
-      "subtopic": "Paradigms, Perspectives, Comte, Durkheim, Weber and Marx",
+      "number": 16,
+      "subject": "Sociology",
+      "topic": "Sociological perspectives and social change",
+      "subtopic": "",
       "question": "Which perspective studies society as a self-regulating mechanism where phenomena like divorce are seen as system failures?",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "functionalism",
+          "text": "Functionalism",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "conflict theory",
+          "text": "All are correct",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "symbolic interactionism",
+          "text": "Conflict",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "postmodern constructivism",
+          "text": "Symbolic interactionism",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "functionalism",
-      "explanation": ""
+      "correct_answer": "Functionalism",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0017",
-      "topic": "Sociological Paradigms and Classical Thinkers",
-      "subtopic": "Paradigms, Perspectives, Comte, Durkheim, Weber and Marx",
+      "number": 17,
+      "subject": "Sociology",
+      "topic": "Sociological perspectives and social change",
+      "subtopic": "",
       "question": "A perspective that views society as an arena of constant struggle for social resources (power, wealth, status). Here, the most dominant groups establish the social norms",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "functionalism, because it emphasizes integration and stability",
+          "text": "Functionalism",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "ethnomethodology, because it studies routine interaction rules",
+          "text": "All are correct",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "conflict theory, because it focuses on power and unequal resources",
+          "text": "Conflict",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "symbolic interactionism, because it studies negotiated meanings",
+          "text": "Symbolic interactionism",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "conflict theory, because it focuses on power and unequal resources",
-      "explanation": ""
+      "correct_answer": "Conflict",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0018",
-      "topic": "Sociological Paradigms and Classical Thinkers",
-      "subtopic": "Paradigms, Perspectives, Comte, Durkheim, Weber and Marx",
+      "number": 18,
+      "subject": "Sociology",
+      "topic": "Sociological perspectives and social change",
+      "subtopic": "",
       "question": "A micro-level perspective that examines how social order and norms are constructed through everyday social interactions within specific groups.",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "functionalism",
+          "text": "Functionalism",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "conflict theory",
+          "text": "All are correct",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "positivism",
+          "text": "Conflict",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "symbolic interactionism",
+          "text": "Symbolic interactionism",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "symbolic interactionism",
-      "explanation": ""
+      "correct_answer": "Symbolic interactionism",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0019",
-      "topic": "Sociological Paradigms and Classical Thinkers",
-      "subtopic": "Paradigms, Perspectives, Comte, Durkheim, Weber and Marx",
+      "number": 19,
+      "subject": "Sociology",
+      "topic": "Sociological perspectives and social change",
+      "subtopic": "",
       "question": "One of the founders of sociology who introduced the concept of 'anomie' to explain the rising suicide rates in industrializing societies.",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "Max Weber",
+          "text": "M.Weber",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "Emile Durkheim",
+          "text": "E.Durkheim",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "Karl Marx",
+          "text": "K.Marx",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "Auguste Comte",
+          "text": "O.Comte",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "Emile Durkheim",
-      "explanation": ""
+      "correct_answer": "E.Durkheim",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0020",
-      "topic": "Sociological Paradigms and Classical Thinkers",
-      "subtopic": "Paradigms, Perspectives, Comte, Durkheim, Weber and Marx",
+      "number": 20,
+      "subject": "Sociology",
+      "topic": "Sociological perspectives and social change",
+      "subtopic": "",
       "question": "One of the founders of sociology who paid attention to the spread of organizations in the life of society",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "Max Weber, through his analysis of bureaucracy and formal organization",
+          "text": "M.Weber",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "Emile Durkheim, through his theory of anomie and suicide",
+          "text": "E.Durkheim",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "Karl Marx, through his theory of class conflict",
+          "text": "K.Marx",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "Auguste Comte, through his law of three stages",
+          "text": "O.Comte",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "Max Weber, through his analysis of bureaucracy and formal organization",
-      "explanation": ""
+      "correct_answer": "M.Weber",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0021",
-      "topic": "Sociological Paradigms and Classical Thinkers",
-      "subtopic": "Paradigms, Perspectives, Comte, Durkheim, Weber and Marx",
+      "number": 21,
+      "subject": "Sociology",
+      "topic": "Sociological perspectives and social change",
+      "subtopic": "",
       "question": "The founder of the conflict perspective, who argued that an individual's relationship to the means of production determines the consciousness of social groups.",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "Max Weber",
+          "text": "M.Weber",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "Emile Durkheim",
+          "text": "E.Durkheim",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "Karl Marx",
+          "text": "K.Marx",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "Auguste Comte",
+          "text": "O.Comte",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "Karl Marx",
-      "explanation": ""
+      "correct_answer": "K.Marx",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0022",
-      "topic": "Social Change, Modernity and Environment",
-      "subtopic": "Globalization, Consumer Society, Ecology and Urbanization",
+      "number": 22,
+      "subject": "Sociology",
+      "topic": "Sociological perspectives and social change",
+      "subtopic": "",
       "question": "Qualitative changes in people way of life are called",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "social changes",
+          "text": "Social changes",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "social mobility",
+          "text": "Urbanization",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "urban segregation",
+          "text": "Globalization",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "demographic transition",
+          "text": "All answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "social changes",
-      "explanation": ""
+      "correct_answer": "Social changes",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0023",
-      "topic": "Social Change, Modernity and Environment",
-      "subtopic": "Globalization, Consumer Society, Ecology and Urbanization",
+      "number": 23,
+      "subject": "Sociology",
+      "topic": "Sociological perspectives and social change",
+      "subtopic": "",
       "question": "Major social changes in contemporary are",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "globalization only as cross-border economic exchange",
+          "text": "Globalization",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "digitalization only as technological infrastructure",
+          "text": "Digitalization",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "consumerism only as a change in purchasing habits",
+          "text": "Consumerism",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "globalization, digitalization and consumerism together",
+          "text": "All answers are correct",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "globalization, digitalization and consumerism together",
-      "explanation": ""
+      "correct_answer": "All answers are correct",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0024",
-      "topic": "Social Change, Modernity and Environment",
-      "subtopic": "Globalization, Consumer Society, Ecology and Urbanization",
+      "number": 24,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "The principle of this method is “the image instead words”",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "statistical modeling of numerical indicators",
+          "text": "Statistics",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "participant observation recorded only as field notes",
+          "text": "Fieldwork",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "visual methods using images instead of only words",
+          "text": "Visual methods",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "bibliographic review of published literature",
+          "text": "Bibliography",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "visual methods using images instead of only words",
-      "explanation": ""
+      "correct_answer": "Visual methods",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0025",
-      "topic": "Social Change, Modernity and Environment",
-      "subtopic": "Globalization, Consumer Society, Ecology and Urbanization",
+      "number": 25,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "Visual methods include",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "interviews, questionnaires and focus groups",
+          "text": "List of literature",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "photo, video and maps as visual materials",
+          "text": "Photo, video, maps",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "tables, coefficients and regression models",
+          "text": "Fieldwork report",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "laws, policy documents and administrative orders",
+          "text": "All answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "photo, video and maps as visual materials",
-      "explanation": ""
+      "correct_answer": "Photo, video, maps",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0026",
-      "topic": "Social Change, Modernity and Environment",
-      "subtopic": "Globalization, Consumer Society, Ecology and Urbanization",
+      "number": 26,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "In which 1993 book did G. Ritzer explain the spread of fast-food principles to all sectors of society?",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "The McDonaldization of Society",
+          "text": "McDonaldization of society",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "The Sociological Imagination",
+          "text": "Social change theory",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "The Power of Weak Ties",
+          "text": "Social network theory",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "Imagined Communities",
+          "text": "Managerial society",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "The McDonaldization of Society",
-      "explanation": ""
+      "correct_answer": "McDonaldization of society",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0027",
-      "topic": "Social Change, Modernity and Environment",
-      "subtopic": "Globalization, Consumer Society, Ecology and Urbanization",
+      "number": 27,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "Due to the shift away from the production of goods, modern society is often called",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "industrial society centered on factory production",
+          "text": "Industrial society",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "agrarian society centered on land ownership",
+          "text": "Internet generation",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "military society centered on coercive institutions",
+          "text": "Global society",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "consumer society centered on consumption and services",
+          "text": "Consumer society",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "consumer society centered on consumption and services",
-      "explanation": ""
+      "correct_answer": "Consumer society",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0028",
-      "topic": "Social Change, Modernity and Environment",
-      "subtopic": "Globalization, Consumer Society, Ecology and Urbanization",
+      "number": 28,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "The culture of unlimited consumption has led to significant problems in",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "kinship terminology",
+          "text": "Market",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "environmental sustainability and ecological balance",
+          "text": "Environment",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "constitutional design only",
+          "text": "Technology",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "formal rules of university debate",
+          "text": "All answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "environmental sustainability and ecological balance",
-      "explanation": ""
+      "correct_answer": "Environment",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0029",
-      "topic": "Social Change, Modernity and Environment",
-      "subtopic": "Globalization, Consumer Society, Ecology and Urbanization",
+      "number": 29,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "One of the most important problems of Kazakhstan in ecology",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "access to clean water",
+          "text": "Accesss to clean water",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "complete absence of mineral resources",
+          "text": "Deficit of minerals",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "lack of any urban development",
+          "text": "Deficit of food",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "absence of agricultural land",
+          "text": "All answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "access to clean water",
-      "explanation": ""
+      "correct_answer": "Accesss to clean water",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0030",
-      "topic": "Social Change, Modernity and Environment",
-      "subtopic": "Globalization, Consumer Society, Ecology and Urbanization",
+      "number": 30,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "The social process characterized by the large-scale movement of people from rural areas to big cities",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "globalization",
+          "text": "Globalization",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "nationalization",
+          "text": "Nationalization",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "urbanization",
+          "text": "Urbanization",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "secularization",
+          "text": "All answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "urbanization",
-      "explanation": ""
+      "correct_answer": "Urbanization",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0031",
-      "topic": "Urban Sociology and Field Research",
-      "subtopic": "Chicago School, Urbanistics, Ethnography and Ethnomethodology",
+      "number": 31,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "Researchers from which university began to apply field research methods to study the life of urban life (ethnic districts, neighborhoods, nightlife, gangs, etc. ).",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "University of Bologna",
+          "text": "Bologna",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "University of Paris",
+          "text": "Paris",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "University of Oxford",
+          "text": "Oxford",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "University of Chicago",
+          "text": "Chicago",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "University of Chicago",
-      "explanation": ""
+      "correct_answer": "Chicago",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0032",
-      "topic": "Urban Sociology and Field Research",
-      "subtopic": "Chicago School, Urbanistics, Ethnography and Ethnomethodology",
+      "number": 32,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "An interdisciplinary field that studies the city as a 'second nature', examining how infrastructure (buildings, roads, public spaces) shapes daily social interactions.",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "general sociology without spatial analysis",
+          "text": "Sociology",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "political science focused on state institutions",
+          "text": "Political science",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "urbanistics as the interdisciplinary study of the city",
+          "text": "Urbanistics",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "architecture limited to building design",
+          "text": "Architecture",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "urbanistics as the interdisciplinary study of the city",
-      "explanation": ""
+      "correct_answer": "Urbanistics",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0033",
-      "topic": "Urban Sociology and Field Research",
-      "subtopic": "Chicago School, Urbanistics, Ethnography and Ethnomethodology",
+      "number": 33,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "A type of field study in which typical behavior, norms and values are described during long-term observation",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "ethnography",
+          "text": "Ethnography",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "ethnomethodology",
+          "text": "Ethnomethodology",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "conversation analysis",
+          "text": "Converation analysis",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "social network analysis",
+          "text": "SNA",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "ethnography",
-      "explanation": ""
+      "correct_answer": "Ethnography",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0034",
-      "topic": "Urban Sociology and Field Research",
-      "subtopic": "Chicago School, Urbanistics, Ethnography and Ethnomethodology",
+      "number": 34,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "A type of field research that studies the ways and methods people use to order everyday interactions and produce social order.",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "ethnography as long-term description of a cultural setting",
+          "text": "Ethnography",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "ethnomethodology as the study of methods people use to produce order",
+          "text": "Ethnomethodology",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "conversation analysis as a study of talk sequences",
+          "text": "Converation analysis",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "social network analysis as a study of graph relations",
+          "text": "SNA",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "ethnomethodology as the study of methods people use to produce order",
-      "explanation": ""
+      "correct_answer": "Ethnomethodology",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0035",
-      "topic": "Urban Sociology and Field Research",
-      "subtopic": "Chicago School, Urbanistics, Ethnography and Ethnomethodology",
+      "number": 35,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "The founder of ethnomethodology",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "George Ritzer",
+          "text": "G.Ritzer",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "Harold Garfinkel",
+          "text": "G. Garfinkel",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "Benedict Anderson",
+          "text": "G.E. Anderson",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "Mark Granovetter",
+          "text": "M. Granovetter",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "Harold Garfinkel",
-      "explanation": ""
+      "correct_answer": "G. Garfinkel",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0036",
-      "topic": "Urban Sociology and Field Research",
-      "subtopic": "Chicago School, Urbanistics, Ethnography and Ethnomethodology",
+      "number": 36,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "A type of field research based on the premise that social life is manifested primarily through talk, allowing for the study of social order within a particular group.",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "ethnomethodology",
+          "text": "Ethnomethodology",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "ethnography",
+          "text": "Ethnography",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "social network analysis",
+          "text": "SNA",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "conversation analysis",
+          "text": "Conversation analysis",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "conversation analysis",
-      "explanation": ""
+      "correct_answer": "Conversation analysis",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0037",
-      "topic": "Urban Sociology and Field Research",
-      "subtopic": "Chicago School, Urbanistics, Ethnography and Ethnomethodology",
+      "number": 37,
+      "subject": "Sociology",
+      "topic": "Research methods and urban studies",
+      "subtopic": "",
       "question": "In field research identifying the typicality of interactions and the validity of data is crucial. For this reason it is necessary to conduct",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "one short interview with an available respondent",
+          "text": "bibliography",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "a literature review without observing interaction",
+          "text": "statistic analysis",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "frequent or long-term observations of the setting",
+          "text": "frequency or longtime observations",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "only official statistics collected outside the field",
+          "text": "all answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "frequent or long-term observations of the setting",
-      "explanation": ""
+      "correct_answer": "frequency or longtime observations",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0038",
-      "topic": "Family, Bioethics and Social Policy",
-      "subtopic": "Family Institution, Bioethics, Family Policy and Welfare Capitalism",
+      "number": 38,
+      "subject": "Sociology",
+      "topic": "Family sociology and bioethics",
+      "subtopic": "",
       "question": "The specific focus of studying the family in sociology is best expressed by which question?",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "what should an ideal family look like according to morality?",
+          "text": "What should an ideal family look like?",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "what happens to family as a social institution?",
+          "text": "What happens with family as one of the social institutions?",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "which romantic story about family is most popular?",
+          "text": "Romantic stories about family",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "how should individual partners choose each other?",
+          "text": "All answers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "what happens to family as a social institution?",
-      "explanation": ""
+      "correct_answer": "What happens with family as one of the social institutions?",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0039",
-      "topic": "Family, Bioethics and Social Policy",
-      "subtopic": "Family Institution, Bioethics, Family Policy and Welfare Capitalism",
+      "number": 39,
+      "subject": "Sociology",
+      "topic": "Family sociology and bioethics",
+      "subtopic": "",
       "question": "Discipline which studies the ethical problems of such phenomena as surrogate motherhood, IVF, abortion, cloning, euthanasia",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "bioethics",
+          "text": "Bioethics",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "bioengineering",
+          "text": "Bioengineering",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "anatomy",
+          "text": "Anatomy",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "civil procedure law",
+          "text": "Law",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "bioethics",
-      "explanation": ""
+      "correct_answer": "Bioethics",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0040",
-      "topic": "Family, Bioethics and Social Policy",
-      "subtopic": "Family Institution, Bioethics, Family Policy and Welfare Capitalism",
+      "number": 40,
+      "subject": "Sociology",
+      "topic": "Family sociology and bioethics",
+      "subtopic": "",
       "question": "The influence of the state on family relations through supporting or restricting laws and measures",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "family planning as individual reproductive decisions",
+          "text": "Family planning",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "commodification as turning care into market services",
+          "text": "Commodification",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "family policy as state influence through laws and support measures",
+          "text": "Family policy",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "subsidiarity as delegating responsibility to lower social levels",
+          "text": "Subsidiarity",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "family policy as state influence through laws and support measures",
-      "explanation": ""
+      "correct_answer": "Family policy",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0041",
-      "topic": "Family, Bioethics and Social Policy",
-      "subtopic": "Family Institution, Bioethics, Family Policy and Welfare Capitalism",
+      "number": 41,
+      "subject": "Sociology",
+      "topic": "Family sociology and bioethics",
+      "subtopic": "",
       "question": "Author of 'The Three Worlds of Welfare Capitalism' (1990), concepts of de-commodification and, later, de-familialization.",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
@@ -1299,258 +1427,282 @@
         },
         {
           "id": "C",
-          "text": "C. Northcote Parkinson",
+          "text": "Cyril Parkinson",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "George Ritzer",
+          "text": "G.Ritzer",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
       "correct_answer": "Gøsta Esping-Andersen",
-      "explanation": ""
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0042",
-      "topic": "Literature Review, Content Analysis and Nations",
-      "subtopic": "Literature Review, Media Content Analysis and Imagined Communities",
+      "number": 42,
+      "subject": "Sociology",
+      "topic": "Literature review and content analysis",
+      "subtopic": "",
       "question": "A research method that involves studying 'what has already been studied' by reviewing the most authoritative works on a topic.",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "statistical modeling",
+          "text": "Statistics",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "fieldwork",
+          "text": "Fieldwork",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "social network analysis",
+          "text": "SNA",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "literature review",
+          "text": "Literature review",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "literature review",
-      "explanation": ""
+      "correct_answer": "Literature review",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0043",
-      "topic": "Literature Review, Content Analysis and Nations",
-      "subtopic": "Literature Review, Media Content Analysis and Imagined Communities",
+      "number": 43,
+      "subject": "Sociology",
+      "topic": "Literature review and content analysis",
+      "subtopic": "",
       "question": "For literature review it is useful to work",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "only through general internet search results",
+          "text": "In internet",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "only in a private office without sources",
+          "text": "In the office",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "in specialized academic databases",
+          "text": "In special databases",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "only from personal notes and memory",
+          "text": "Alone",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "in specialized academic databases",
-      "explanation": ""
+      "correct_answer": "In special databases",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0044",
-      "topic": "Literature Review, Content Analysis and Nations",
-      "subtopic": "Literature Review, Media Content Analysis and Imagined Communities",
+      "number": 44,
+      "subject": "Sociology",
+      "topic": "Literature review and content analysis",
+      "subtopic": "",
       "question": "The research method by which media materials are studied as facts",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "survey research",
+          "text": "Survey",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "social network analysis",
+          "text": "SNA",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "participant observation",
+          "text": "Fieldwork",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "content analysis",
+          "text": "Content analysis",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "content analysis",
-      "explanation": ""
+      "correct_answer": "Content analysis",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0045",
-      "topic": "Literature Review, Content Analysis and Nations",
-      "subtopic": "Literature Review, Media Content Analysis and Imagined Communities",
+      "number": 45,
+      "subject": "Sociology",
+      "topic": "Literature review and content analysis",
+      "subtopic": "",
       "question": "Who formalized the method of content analysis in the book 'Propaganda Technique in the World War' (1927)?",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "Mark Granovetter",
+          "text": "M. Granovetter",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "Harold Lasswell",
+          "text": "G. Lasswell",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "Harold Garfinkel",
+          "text": "G.Garfinkel",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "C. Wright Mills",
+          "text": "C.W.Mills",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "Harold Lasswell",
-      "explanation": ""
+      "correct_answer": "G. Lasswell",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0046",
-      "topic": "Literature Review, Content Analysis and Nations",
-      "subtopic": "Literature Review, Media Content Analysis and Imagined Communities",
+      "number": 46,
+      "subject": "Sociology",
+      "topic": "Literature review and content analysis",
+      "subtopic": "",
       "question": "Content analysis main question",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "which news outlet is morally right?",
+          "text": "What is true news?",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "how are news topics framed and presented?",
+          "text": "How the news are presented?",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "who owns every media company?",
+          "text": "Who is right?",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "how many people agree with the journalist?",
+          "text": "All anwers are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "how are news topics framed and presented?",
-      "explanation": ""
+      "correct_answer": "How the news are presented?",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0047",
-      "topic": "Literature Review, Content Analysis and Nations",
-      "subtopic": "Literature Review, Media Content Analysis and Imagined Communities",
+      "number": 47,
+      "subject": "Sociology",
+      "topic": "Literature review and content analysis",
+      "subtopic": "",
       "question": "In content analysis it is counting and studying the context of applying",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "authors as biographical personalities",
+          "text": "Authors",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "keywords or sense units and their context",
+          "text": "Key words (sense units)",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "printing editions as physical objects",
+          "text": "Editions",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "titles without the text of the materials",
+          "text": "Titles",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "keywords or sense units and their context",
-      "explanation": ""
+      "correct_answer": "Key words (sense units)",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0048",
-      "topic": "Literature Review, Content Analysis and Nations",
-      "subtopic": "Literature Review, Media Content Analysis and Imagined Communities",
-      "question": "Benedict Anderson in book “Imagined Communities” (1983) lays the groundwork for studying nations as",
+      "number": 48,
+      "subject": "Sociology",
+      "topic": "Literature review and content analysis",
+      "subtopic": "",
+      "question": "Benedict Anderson in book “Imagined Communities” (1983)  lays the groundwork for studying nations as",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "social constructs",
+          "text": "Social constructs",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "biological facts",
+          "text": "Facts",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "Blut und Boden natural communities",
+          "text": "Blut und Boden",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "purely legal organizations with no symbolic dimension",
+          "text": "All answers are wrong",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "social constructs",
-      "explanation": ""
+      "correct_answer": "Social constructs",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0049",
-      "topic": "Inequality, Statistics and Social Network Analysis",
-      "subtopic": "Gini, Exclusion Theory, Statistics, Correlation and SNA",
+      "number": 49,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "Well known indicator of inequality",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "total fertility rate",
+          "text": "Fertility rate",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "democracy index",
+          "text": "Democracy rate",
           "is_correct": false
         },
         {
@@ -1566,583 +1718,638 @@
       ],
       "correct_option_id": "D",
       "correct_answer": "Gini coefficient",
-      "explanation": ""
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0050",
-      "topic": "Inequality, Statistics and Social Network Analysis",
-      "subtopic": "Gini, Exclusion Theory, Statistics, Correlation and SNA",
+      "number": 50,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "Theory that explains social inequality through people's access to various social relationships (family, government services, market, education, politics, etc.) expressed in book of René Lenoir “Les Exclus: Un Français sur dix” (1974).",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "social change theory",
+          "text": "Social change theory",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "social policy theory in a broad sense",
+          "text": "Social policy theory",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "welfare state typology",
+          "text": "Welfare state",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "exclusion theory",
+          "text": "Exclusion theory",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "exclusion theory",
-      "explanation": ""
+      "correct_answer": "Exclusion theory",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0051",
-      "topic": "Inequality, Statistics and Social Network Analysis",
-      "subtopic": "Gini, Exclusion Theory, Statistics, Correlation and SNA",
+      "number": 51,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "Working with statistics doubts about the credibility of the data should be expressed in",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "the data source and its credibility",
+          "text": "Data source",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "the numerical values without checking origin",
+          "text": "Values",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "the visual trend line only",
+          "text": "Trends",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "every sentence regardless of evidence",
+          "text": "In each sentence",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "the data source and its credibility",
-      "explanation": ""
+      "correct_answer": "Data source",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0052",
-      "topic": "Inequality, Statistics and Social Network Analysis",
-      "subtopic": "Gini, Exclusion Theory, Statistics, Correlation and SNA",
+      "number": 52,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "The description of graphs or tables should begins with a sentence that answers questions",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "what and why?",
+          "text": "What? Why?",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "what, where and when?",
+          "text": "What? Where? When?",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "when only?",
+          "text": "When?",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "why only?",
+          "text": "Why?",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "what, where and when?",
-      "explanation": ""
+      "correct_answer": "What? Where? When?",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0053",
-      "topic": "Inequality, Statistics and Social Network Analysis",
-      "subtopic": "Gini, Exclusion Theory, Statistics, Correlation and SNA",
+      "number": 53,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "1, 3, 3, 4, 5, 7, 9, 10, 20. What is the median?",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "4, because it is near the center of the lower half",
+          "text": "3",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "4.5, because the two central numbers are averaged",
+          "text": "4 and 5",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "7, because it is in the upper half of the series",
+          "text": "4",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "5, because it is the fifth value in the ordered nine-number series",
+          "text": "5",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "5, because it is the fifth value in the ordered nine-number series",
-      "explanation": ""
+      "correct_answer": "5",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0054",
-      "topic": "Inequality, Statistics and Social Network Analysis",
-      "subtopic": "Gini, Exclusion Theory, Statistics, Correlation and SNA",
+      "number": 54,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "1, 3, 4, 4, 5, 7, 9, 10. What is the mode?",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "1, because it is the first value",
+          "text": "1",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "4, because it occurs more often than the other values",
+          "text": "4",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "5, because it is near the middle of the ordered values",
+          "text": "7",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "no mode, because the values are not normally distributed",
+          "text": "No mode",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "4, because it occurs more often than the other values",
-      "explanation": ""
+      "correct_answer": "4",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0055",
-      "topic": "Inequality, Statistics and Social Network Analysis",
-      "subtopic": "Gini, Exclusion Theory, Statistics, Correlation and SNA",
+      "number": 55,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "Statistical relationship between indicators",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "causation",
+          "text": "Causuation",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "correlation",
+          "text": "Correlations",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "dispersion",
+          "text": "Dispersion",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "sampling frame",
+          "text": "Trend",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "correlation",
-      "explanation": ""
+      "correct_answer": "Correlations",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0056",
-      "topic": "Inequality, Statistics and Social Network Analysis",
-      "subtopic": "Gini, Exclusion Theory, Statistics, Correlation and SNA",
+      "number": 56,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "A causal relationship must be distinguished from",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "a trend over time",
+          "text": "Trend",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "correlation between indicators",
+          "text": "Correlations",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "a value judgment",
+          "text": "Valuable",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "the mode of a distribution",
+          "text": "Mode",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "correlation between indicators",
-      "explanation": ""
+      "correct_answer": "Correlations",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0057",
-      "topic": "Inequality, Statistics and Social Network Analysis",
-      "subtopic": "Gini, Exclusion Theory, Statistics, Correlation and SNA",
+      "number": 57,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "In the book “The Power of Weak Ties” (1973) M. Granovetter substantiated the use",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "descriptive statistics as the main method",
+          "text": "Statistics",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "social network analysis and attention to weak ties",
+          "text": "Social network analysis method",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "ethnomethodology and everyday interaction rules",
+          "text": "Ethnometodology",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "ethnography and long-term field immersion",
+          "text": "Ethnography",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "social network analysis and attention to weak ties",
-      "explanation": ""
+      "correct_answer": "Social network analysis method",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0058",
-      "topic": "Inequality, Statistics and Social Network Analysis",
-      "subtopic": "Gini, Exclusion Theory, Statistics, Correlation and SNA",
+      "number": 58,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "Applying SNA attention is drawn to",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "individual biographies without relationships",
+          "text": "People",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "linear trends over time",
+          "text": "Trends",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "structure, nodes and ties in social graphs",
+          "text": "Structure and nodes in social graphs",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "private values measured outside interaction",
+          "text": "Patterns of behavior",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "structure, nodes and ties in social graphs",
-      "explanation": ""
+      "correct_answer": "Structure and nodes in social graphs",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0059",
-      "topic": "Survey Research, Sampling and Public Opinion",
-      "subtopic": "Representativeness, Random Sampling and Internet Comments",
+      "number": 59,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "In survey research the most critical issue is the representativeness of the results, which is achieved through correct",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "sample design",
+          "text": "Sample",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "questionnaire volume only",
+          "text": "Volume",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "researcher preference",
+          "text": "Plan",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "respondents political views",
+          "text": "Political views",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "sample design",
-      "explanation": ""
+      "correct_answer": "Sample",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0060",
-      "topic": "Survey Research, Sampling and Public Opinion",
-      "subtopic": "Representativeness, Random Sampling and Internet Comments",
+      "number": 60,
+      "subject": "Sociology",
+      "topic": "Statistics, inequality, SNA and sampling",
+      "subtopic": "",
       "question": "What type of sampling ensures that every element of the general population has a non-zero probability of being included in the sample?",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "quota sampling based on preselected categories",
+          "text": "Quote",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "random sampling with non-zero inclusion probability",
+          "text": "Random",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "snowball sampling through respondent referrals",
+          "text": "Snow ball",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "convenience sampling of easily available respondents",
+          "text": "All are correct",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "random sampling with non-zero inclusion probability",
-      "explanation": ""
+      "correct_answer": "Random",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0061",
-      "topic": "Survey Research, Sampling and Public Opinion",
-      "subtopic": "Representativeness, Random Sampling and Internet Comments",
+      "number": 61,
+      "subject": "Sociology",
+      "topic": "Public opinion and university debate",
+      "subtopic": "",
       "question": "Why internet comments don't represent public opinion",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "self-selection: not everyone uses the internet or writes comments",
+          "text": "People spend different time on the Internet, not everyone write comments",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "platform effects such as moderation, manipulation and removals",
+          "text": "There are provocations, cheating, removal, etc.",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "segmentation of online spaces into unequal audiences",
+          "text": "The Internet is segmented",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "all these factors together distort representativeness",
+          "text": "All are correct",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "all these factors together distort representativeness",
-      "explanation": ""
+      "correct_answer": "All are correct",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0062",
-      "topic": "University Debate and Argumentation",
-      "subtopic": "Case, Rebuttal, Analysis Speech and Debate Mechanics",
+      "number": 62,
+      "subject": "Sociology",
+      "topic": "Public opinion and university debate",
+      "subtopic": "",
       "question": "What theses about university debate is correct",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "debate is an unstructured personal quarrel",
+          "text": "Debates is a game of arguing, but not a real arguing.",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "the side is chosen by personal preference before each round",
+          "text": "The theme (resolution) and the side are random.",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "there is only one universal debate format",
+          "text": "There are various formats of debating (British, American, and others).",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "debate is a structured game with assigned resolution, side and format rules",
+          "text": "All answers are correct",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "debate is a structured game with assigned resolution, side and format rules",
-      "explanation": ""
+      "correct_answer": "All answers are correct",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0063",
-      "topic": "University Debate and Argumentation",
-      "subtopic": "Case, Rebuttal, Analysis Speech and Debate Mechanics",
+      "number": 63,
+      "subject": "Sociology",
+      "topic": "Public opinion and university debate",
+      "subtopic": "",
       "question": "It consists of definition, philosophy, status quo and arguments",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "case",
+          "text": "Case",
           "is_correct": true
         },
         {
           "id": "B",
-          "text": "rebuttal",
+          "text": "Rebuttal",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "analysis speech",
+          "text": "Analysis speech",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "point of information",
+          "text": "All answers are wrong",
           "is_correct": false
         }
       ],
       "correct_option_id": "A",
-      "correct_answer": "case",
-      "explanation": ""
+      "correct_answer": "Case",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0064",
-      "topic": "University Debate and Argumentation",
-      "subtopic": "Case, Rebuttal, Analysis Speech and Debate Mechanics",
+      "number": 64,
+      "subject": "Sociology",
+      "topic": "Public opinion and university debate",
+      "subtopic": "",
       "question": "The role of speakers is to",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "only to read the prepared case without reacting",
+          "text": "Present case",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "to rebut opponents by answering and weakening their arguments",
+          "text": "Rebut",
           "is_correct": true
         },
         {
           "id": "C",
-          "text": "only to summarize the judges final decision",
+          "text": "Prepare analysis speech",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "to avoid clash and introduce unrelated examples",
+          "text": "All answers are wrong",
           "is_correct": false
         }
       ],
       "correct_option_id": "B",
-      "correct_answer": "to rebut opponents by answering and weakening their arguments",
-      "explanation": ""
+      "correct_answer": "Rebut",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0065",
-      "topic": "University Debate and Argumentation",
-      "subtopic": "Case, Rebuttal, Analysis Speech and Debate Mechanics",
+      "number": 65,
+      "subject": "Sociology",
+      "topic": "Public opinion and university debate",
+      "subtopic": "",
       "question": "A part of the game where it is possible to catch the opponent with uncomfortable and tricky remarks from the seat",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "case construction",
+          "text": "Case",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "main rebuttal speech",
+          "text": "Rebuttal",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "analysis speech",
+          "text": "Analysis speech",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "questions and protests from the seat",
+          "text": "Questions and protests",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "questions and protests from the seat",
-      "explanation": ""
+      "correct_answer": "Questions and protests",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0066",
-      "topic": "University Debate and Argumentation",
-      "subtopic": "Case, Rebuttal, Analysis Speech and Debate Mechanics",
+      "number": 66,
+      "subject": "Sociology",
+      "topic": "Public opinion and university debate",
+      "subtopic": "",
       "question": "A part of the game in which it is necessary to convince judges that your team was more persuasive through description of game’s progress",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "case",
+          "text": "Case",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "rebuttal",
+          "text": "Rebuttal",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "analysis speech",
+          "text": "Analysis speech",
           "is_correct": true
         },
         {
           "id": "D",
-          "text": "questions and protests",
+          "text": "Questions and protests",
           "is_correct": false
         }
       ],
       "correct_option_id": "C",
-      "correct_answer": "analysis speech",
-      "explanation": ""
+      "correct_answer": "Analysis speech",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     },
     {
       "id": "SOC-Q0067",
-      "topic": "University Debate and Argumentation",
-      "subtopic": "Case, Rebuttal, Analysis Speech and Debate Mechanics",
-      "question": "In research design, a number such as 67 becomes meaningful sociological data only when it is",
+      "number": 67,
+      "subject": "Sociology",
+      "topic": "Public opinion and university debate",
+      "subtopic": "",
+      "question": "What is 67?",
       "type": "multiple_choice_manual_answer_practice",
       "options": [
         {
           "id": "A",
-          "text": "treated as an isolated label without context",
+          "text": "Two-thirds",
           "is_correct": false
         },
         {
           "id": "B",
-          "text": "used as a personal opinion in a debate",
+          "text": "Passing grade",
           "is_correct": false
         },
         {
           "id": "C",
-          "text": "reported without source or measurement procedure",
+          "text": "Article of the Constitution",
           "is_correct": false
         },
         {
           "id": "D",
-          "text": "connected to a defined variable, source and context",
+          "text": "Six seven.",
           "is_correct": true
         }
       ],
       "correct_option_id": "D",
-      "correct_answer": "connected to a defined variable, source and context",
-      "explanation": ""
+      "correct_answer": "Six seven.",
+      "explanation": "",
+      "source_file": "Final tests_Sociology.docx"
     }
   ],
   "liveCoding": []
