@@ -71,6 +71,7 @@ Current example:
 
 ```text
 base/Machine_learning/Additional Final exam sample questions.pdf
+base/Economics_and_Industrial_Engineering/economics_industrial_engineering_questions.json
 base/Sociology/sociology_exam_questions.json
 base/Web_component_development/final_exam_questions.json
 ```
@@ -194,6 +195,66 @@ Expected result for Sociology:
 - topics are created from `topic` + `subtopic`;
 - `is_correct` should be a JSON boolean; string values such as `"true"`/`"false"` are normalized defensively;
 - repeated imports update existing JSON questions by stable id/hash instead of creating duplicates.
+
+### Economics and Industrial Engineering JSON import
+
+The Economics and Industrial Engineering base is stored at:
+
+```text
+base/Economics_and_Industrial_Engineering/economics_industrial_engineering_questions.json
+```
+
+It uses the same repeat-safe JSON importer:
+
+```json
+{
+  "subject": "Economics and Industrial Engineering",
+  "slug": "economics-and-industrial-engineering",
+  "questions": [
+    {
+      "id": "EIE-Q0001",
+      "source_number": 1,
+      "topic": "Module 1: Economics",
+      "subtopic": "",
+      "question": "What is the etymological origin of the word 'economics'?",
+      "type": "multiple_choice",
+      "options": [
+        {"id": "A", "text": "Greek: 'oikos' (household) + 'nomos' (rules/law)", "is_correct": true},
+        {"id": "B", "text": "Latin: 'oecon' (trade)", "is_correct": false},
+        {"id": "C", "text": "Arabic: 'iqtisad' (moderation)", "is_correct": false},
+        {"id": "D", "text": "Old English: 'eacn' (increase)", "is_correct": false}
+      ],
+      "correct_option_id": "A",
+      "correct_answer": "Greek: 'oikos' (household) + 'nomos' (rules/law)",
+      "explanation": "",
+      "source_file": "Final Exam 140 вопросов ENG 2025 г.docx",
+      "hash": "..."
+    }
+  ],
+  "liveCoding": [],
+  "metadata": {
+    "total_questions": 190
+  }
+}
+```
+
+Import it with the standard command:
+
+```bash
+docker compose run --rm backend python manage.py import_questions
+```
+
+Expected result for Economics and Industrial Engineering:
+
+- subject name: `Economics and Industrial Engineering`;
+- subject slug: `economics-and-industrial-engineering`;
+- theory questions: `190`;
+- live coding tasks: `0`;
+- every question has exactly four answer variants and exactly one correct answer;
+- topics are created from `topic`;
+- `hash` and per-question `source_file` are read from JSON when present;
+- repeated imports update existing JSON questions by stable hash instead of creating duplicates;
+- if an older local import used the folder slug/hash strategy, the importer normalizes it to the JSON slug/hash and keeps existing question/answer records where possible.
 
 ## Topics
 
@@ -357,6 +418,7 @@ Covered areas:
 
 - tagged question parsing;
 - JSON import for theory questions, topics, answer variants, and live coding tasks;
+- Economics and Industrial Engineering JSON import with 190 questions, topic binding, stable hashes, and repeat-safe updates;
 - duplicate-stable hashing;
 - duplicate-safe import across multiple PDF files and repeated runs;
 - weighted question selection modes;

@@ -60,6 +60,36 @@ def subject_name_from_dir(value):
     return normalized.title() if normalized else str(value)
 
 
+def subject_metadata_from_json(data):
+    if not isinstance(data, dict):
+        return "", ""
+
+    raw_subject = data.get("subject")
+    raw_slug = data.get("slug")
+
+    if isinstance(raw_subject, dict):
+        subject_name = raw_subject.get("name") or raw_subject.get("title") or ""
+        subject_slug = raw_slug or raw_subject.get("slug") or ""
+    else:
+        subject_name = raw_subject or ""
+        subject_slug = raw_slug or ""
+
+    return normalize_text(str(subject_name)) if subject_name else "", normalize_text(str(subject_slug)) if subject_slug else ""
+
+
+def subject_metadata_from_json_files(json_files):
+    for json_file in json_files:
+        try:
+            data = json.loads(Path(json_file).read_text(encoding="utf-8"))
+        except Exception:
+            continue
+
+        subject_name, subject_slug = subject_metadata_from_json(data)
+        if subject_name or subject_slug:
+            return subject_name, subject_slug
+    return "", ""
+
+
 def stable_slug(value, fallback="item"):
     return slugify(normalize_text(value))[:220] or fallback
 
@@ -152,6 +182,10 @@ def question_hash(subject_slug, question):
 
 
 def json_question_hash(subject_slug, topic_slug, question):
+    provided_hash = normalize_text(question.get("hash") or "")
+    if provided_hash:
+        return provided_hash[:64]
+
     external_id = normalize_text(question.get("external_id") or question.get("id") or "")
     if external_id:
         payload = {
@@ -181,6 +215,10 @@ def json_question_hash(subject_slug, topic_slug, question):
 
 
 def live_coding_hash(subject_slug, topic_slug, task):
+    provided_hash = normalize_text(task.get("hash") or "")
+    if provided_hash:
+        return provided_hash[:64]
+
     external_id = normalize_text(task.get("external_id") or task.get("id") or "")
     if external_id:
         payload = {
@@ -233,6 +271,8 @@ def parse_json_questions(data):
                 "topic_title": topic_title_from_json(item),
                 "difficulty": normalize_text(item.get("difficulty") or ""),
                 "explanation": normalize_text(item.get("explanation") or item.get("correct_answer") or ""),
+                "source_file": normalize_text(item.get("source_file") or ""),
+                "hash": normalize_text(item.get("hash") or ""),
                 "raw": item,
             }
         )
@@ -265,6 +305,8 @@ def parse_json_live_coding(data):
                 "check_type": normalize_text(item.get("check_type") or checking_method.get("mode") or "similarity"),
                 "difficulty": normalize_text(item.get("difficulty") or ""),
                 "tags": item.get("tags") if isinstance(item.get("tags"), list) else [],
+                "source_file": normalize_text(item.get("source_file") or ""),
+                "hash": normalize_text(item.get("hash") or ""),
                 "topic_title": topic_title_from_json(item),
                 "raw": item,
             }
@@ -323,6 +365,107 @@ def get_or_create_topic(subject, title, topic_type, order):
     return topic
 
 
+def normalized_answer_variants(variants):
+    return [
+        {
+            "text": normalize_text(variant["text"]),
+            "is_correct": bool(variant["is_correct"]),
+            "order": order,
+        }
+        for order, variant in enumerate(variants)
+        if variant.get("text")
+    ]
+
+
+def sync_answer_variants(question, variants):
+    incoming = normalized_answer_variants(variants)
+    existing_by_text = {
+        normalize_text(variant.text).casefold(): variant
+        for variant in question.variants.all()
+    }
+    kept_ids = []
+    correct_variant = None
+
+    # Clear the single-correct-answer constraint first, then restore the new
+    # correct variant after inserts/updates are done.
+    AnswerVariant.objects.filter(question=question, is_correct=True).update(is_correct=False)
+
+    for item in incoming:
+        key = item["text"].casefold()
+        variant = existing_by_text.get(key)
+        if variant is None:
+            variant = AnswerVariant.objects.create(
+                question=question,
+                text=item["text"],
+                is_correct=False,
+                order=item["order"],
+            )
+        else:
+            changed_fields = []
+            if variant.text != item["text"]:
+                variant.text = item["text"]
+                changed_fields.append("text")
+            if variant.order != item["order"]:
+                variant.order = item["order"]
+                changed_fields.append("order")
+            if variant.is_correct:
+                variant.is_correct = False
+                changed_fields.append("is_correct")
+            if changed_fields:
+                variant.save(update_fields=changed_fields)
+
+        kept_ids.append(variant.id)
+        if item["is_correct"]:
+            correct_variant = variant
+
+    question.variants.exclude(id__in=kept_ids).delete()
+    if correct_variant:
+        AnswerVariant.objects.filter(pk=correct_variant.pk).update(is_correct=True)
+
+
+def get_or_create_subject(subject_slug, subject_name, folder_slug, subject_dir):
+    subject = Subject.objects.filter(slug=subject_slug).first()
+    if subject is None and folder_slug != subject_slug:
+        subject = Subject.objects.filter(slug=folder_slug).first()
+        if subject:
+            subject.slug = subject_slug
+
+    if subject is None:
+        return Subject.objects.create(
+            slug=subject_slug,
+            name=subject_name,
+            source_path=str(subject_dir),
+            imported_at=timezone.now(),
+        )
+
+    subject.name = subject_name
+    subject.source_path = str(subject_dir)
+    subject.imported_at = timezone.now()
+    subject.save(update_fields=["slug", "name", "source_path", "imported_at", "updated_at"])
+    return subject
+
+
+def find_existing_question_for_json_update(subject, digest, parsed_question):
+    existing = Question.objects.filter(hash=digest).first()
+    if existing:
+        return existing
+
+    # Legacy imports for JSON files used generated hashes before per-question
+    # JSON hashes were supported. Match by subject and exact text so user
+    # progress stays attached when the hash strategy is upgraded.
+    return Question.objects.filter(
+        subject=subject,
+        import_format=Question.FORMAT_JSON,
+        text=normalize_text(parsed_question["text"]),
+    ).first()
+
+
+def item_source_file(parsed_item, fallback, use_item_source_file):
+    if use_item_source_file and parsed_item.get("source_file"):
+        return parsed_item["source_file"]
+    return fallback
+
+
 def import_questions_from_json_file(path, subject, summary, base_path=None, dry_run=False):
     path = Path(path)
     subject_slug = subject.slug if subject else stable_slug(path.parent.name)
@@ -330,6 +473,13 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
 
     try:
         data = json.loads(path.read_text(encoding="utf-8"))
+        metadata_subject_name, metadata_subject_slug = subject_metadata_from_json(data)
+        if metadata_subject_slug:
+            subject_slug = stable_slug(metadata_subject_slug, fallback=subject_slug)
+        elif metadata_subject_name and not subject:
+            subject_slug = stable_slug(metadata_subject_name, fallback=subject_slug)
+        raw_top_level_slug = data.get("slug")
+        use_item_source_file = isinstance(raw_top_level_slug, str) and bool(normalize_text(raw_top_level_slug))
         parsed_questions = parse_json_questions(data)
         parsed_tasks = parse_json_live_coding(data)
         logger.info("Parsed %s theory questions and %s live coding tasks from %s", len(parsed_questions), len(parsed_tasks), path)
@@ -374,7 +524,7 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
 
         try:
             with transaction.atomic():
-                existing = Question.objects.filter(hash=digest).first()
+                existing = find_existing_question_for_json_update(subject, digest, parsed_question)
                 if existing:
                     existing.subject = subject
                     existing.topic = topic
@@ -382,7 +532,8 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
                     existing.difficulty = parsed_question.get("difficulty") or None
                     existing.explanation = parsed_question.get("explanation") or None
                     existing.import_format = Question.FORMAT_JSON
-                    existing.source_file = source_file
+                    existing.source_file = item_source_file(parsed_question, source_file, use_item_source_file)
+                    existing.hash = digest
                     existing.save(
                         update_fields=[
                             "subject",
@@ -392,11 +543,11 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
                             "explanation",
                             "import_format",
                             "source_file",
+                            "hash",
                             "updated_at",
                         ]
                     )
-                    existing.variants.all().delete()
-                    question = existing
+                    sync_answer_variants(existing, parsed_question["variants"])
                     summary.duplicate_questions += 1
                 else:
                     question = Question.objects.create(
@@ -406,23 +557,22 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
                         difficulty=parsed_question.get("difficulty") or None,
                         explanation=parsed_question.get("explanation") or None,
                         import_format=Question.FORMAT_JSON,
-                        source_file=source_file,
+                        source_file=item_source_file(parsed_question, source_file, use_item_source_file),
                         hash=digest,
                     )
                     summary.imported_questions += 1
 
-                AnswerVariant.objects.bulk_create(
-                    [
-                        AnswerVariant(
-                            question=question,
-                            text=normalize_text(variant["text"]),
-                            is_correct=variant["is_correct"],
-                            order=order,
-                        )
-                        for order, variant in enumerate(parsed_question["variants"])
-                        if variant.get("text")
-                    ]
-                )
+                    AnswerVariant.objects.bulk_create(
+                        [
+                            AnswerVariant(
+                                question=question,
+                                text=variant["text"],
+                                is_correct=variant["is_correct"],
+                                order=variant["order"],
+                            )
+                            for variant in normalized_answer_variants(parsed_question["variants"])
+                        ]
+                    )
         except IntegrityError as exc:
             summary.duplicate_questions += 1
             summary.errors.append(f"{path} question #{index}: duplicate or constraint violation: {exc}")
@@ -469,7 +619,7 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
             "check_type": parsed_task["check_type"] or "similarity",
             "difficulty": parsed_task.get("difficulty") or None,
             "tags": parsed_task.get("tags") or [],
-            "source_file": source_file,
+            "source_file": item_source_file(parsed_task, source_file, use_item_source_file),
         }
 
         try:
@@ -503,25 +653,22 @@ def import_questions_from_base(base_dir, dry_run=False):
         logger.info("Found %s subject directories in %s", summary.subjects_found, base_path)
 
         for subject_dir in subject_dirs:
-            subject_slug = slugify(subject_dir.name) or subject_dir.name.lower().replace(" ", "-")
-            subject_name = subject_name_from_dir(subject_dir.name)
             pdf_files = sorted(subject_dir.glob("*.pdf"))
             json_files = sorted(subject_dir.glob("*.json"))
+            folder_slug = slugify(subject_dir.name) or subject_dir.name.lower().replace(" ", "-")
+            folder_name = subject_name_from_dir(subject_dir.name)
+            json_subject_name, json_subject_slug = subject_metadata_from_json_files(json_files)
+            subject_slug = stable_slug(json_subject_slug, fallback=folder_slug) if json_subject_slug else folder_slug
+            subject_name = json_subject_name or folder_name
             summary.files_found += len(pdf_files) + len(json_files)
 
             subject = None
             if not dry_run:
-                subject, _ = Subject.objects.get_or_create(
-                    slug=subject_slug,
-                    defaults={
-                        "name": subject_name,
-                        "source_path": str(subject_dir),
-                    },
-                )
-                Subject.objects.filter(pk=subject.pk).update(
-                    name=subject_name,
-                    source_path=str(subject_dir),
-                    imported_at=timezone.now(),
+                subject = get_or_create_subject(
+                    subject_slug=subject_slug,
+                    subject_name=subject_name,
+                    folder_slug=folder_slug,
+                    subject_dir=subject_dir,
                 )
 
             for pdf_file in pdf_files:
