@@ -71,7 +71,8 @@ Current example:
 
 ```text
 base/Machine_learning/Additional Final exam sample questions.pdf
-base/Economics_and_Industrial_Engineering/economics_industrial_engineering_questions.json
+base/Economics_and_Industrial_Engineering/economics_industrial_engineering_163_questions.json
+base/Economics_and_Industrial_Engineering/images/
 base/Sociology/sociology_exam_questions.json
 base/Web_component_development/final_exam_questions.json
 ```
@@ -79,6 +80,7 @@ base/Web_component_development/final_exam_questions.json
 Run import:
 
 ```bash
+docker compose run --rm backend python manage.py migrate
 docker compose run --rm backend python manage.py import_questions
 ```
 
@@ -104,9 +106,11 @@ The importer:
 - parses every JSON file with `questions` and `liveCoding` sections;
 - creates `Topic` records from JSON topics/subtopics;
 - stores questions and variants in PostgreSQL;
+- stores per-question `explanation`, `formula`, and `image` path when present in the JSON;
 - stores live coding tasks separately from multiple-choice questions;
 - calculates a SHA-256 hash per question to avoid duplicates across files and repeated imports;
 - uses stable JSON ids in hashes, so repeated imports update existing JSON records instead of duplicating them;
+- supports `metadata.replace_subject = true`, which removes a subject's old, differently hashed questions (and their stale theory sessions/stats) before importing the new base, while keeping repeated imports idempotent;
 - rejects malformed PDF questions with fewer than two variants, duplicated variants, or anything other than exactly one correct answer;
 - rejects malformed JSON multiple-choice questions unless they have exactly four variants and exactly one correct answer;
 - writes an `ImportRun` with counts and parsing errors.
@@ -183,6 +187,7 @@ It uses the same JSON importer as Web Component Development:
 Import it with the standard command:
 
 ```bash
+docker compose run --rm backend python manage.py migrate
 docker compose run --rm backend python manage.py import_questions
 ```
 
@@ -196,15 +201,35 @@ Expected result for Sociology:
 - `is_correct` should be a JSON boolean; string values such as `"true"`/`"false"` are normalized defensively;
 - repeated imports update existing JSON questions by stable id/hash instead of creating duplicates.
 
-### Economics and Industrial Engineering JSON import
+### Economics and Industrial Engineering 163-question base
 
-The Economics and Industrial Engineering base is stored at:
+The previously imported **190-question** Economics and Industrial Engineering base has been
+**fully replaced** by a new **163-question** base. The new base lives at:
 
 ```text
-base/Economics_and_Industrial_Engineering/economics_industrial_engineering_questions.json
+base/Economics_and_Industrial_Engineering/economics_industrial_engineering_163_questions.json
 ```
 
-It uses the same repeat-safe JSON importer:
+Diagram images for visual questions live next to it:
+
+```text
+base/Economics_and_Industrial_Engineering/images/
+```
+
+Some exam screenshots were taken from appeal materials under:
+
+```text
+base/Economics_and_Industrial_Engineering/picture_for_questions/
+```
+
+The production-ready images in `images/` use cropped originals from those appeal
+screenshots whenever the matching visual is available. Only the diagram/table/graph
+is kept; the right-side selected answers, answer options, question text, and any
+`Correct answer` text are intentionally excluded. Visuals that are not present in
+`picture_for_questions/` are generated as matching educational diagrams/tables.
+
+Each question object can carry `explanation`, `formula`, and `image` fields. Visual
+questions store the image path relative to the subject folder, for example:
 
 ```json
 {
@@ -212,28 +237,32 @@ It uses the same repeat-safe JSON importer:
   "slug": "economics-and-industrial-engineering",
   "questions": [
     {
-      "id": "EIE-Q0001",
-      "source_number": 1,
-      "topic": "Module 1: Economics",
-      "subtopic": "",
-      "question": "What is the etymological origin of the word 'economics'?",
+      "id": "EIE-Q0044",
+      "source_number": 44,
+      "topic": "Management and Organizational Structure",
+      "subtopic": "Organizational structures",
+      "question": "What is the organizational structure shown in Diagram?",
       "type": "multiple_choice",
       "options": [
-        {"id": "A", "text": "Greek: 'oikos' (household) + 'nomos' (rules/law)", "is_correct": true},
-        {"id": "B", "text": "Latin: 'oecon' (trade)", "is_correct": false},
-        {"id": "C", "text": "Arabic: 'iqtisad' (moderation)", "is_correct": false},
-        {"id": "D", "text": "Old English: 'eacn' (increase)", "is_correct": false}
+        {"id": "A", "text": "Linear structure", "is_correct": true},
+        {"id": "B", "text": "Functional structure", "is_correct": false},
+        {"id": "C", "text": "Matrix structure", "is_correct": false},
+        {"id": "D", "text": "Divisional/Product structure", "is_correct": false}
       ],
       "correct_option_id": "A",
-      "correct_answer": "Greek: 'oikos' (household) + 'nomos' (rules/law)",
-      "explanation": "",
-      "source_file": "Final Exam 140 вопросов ENG 2025 г.docx",
+      "correct_answer": "Linear structure",
+      "explanation": "The diagram matches a Linear structure ...",
+      "formula": "",
+      "image": "images/EIE-Q0044.png",
+      "source_file": "Economics_Question_Bank_163(1).pdf",
       "hash": "..."
     }
   ],
   "liveCoding": [],
   "metadata": {
-    "total_questions": 190
+    "replace_subject": true,
+    "total_questions": 163,
+    "visual_question_numbers": [44, 45, 46, 47, 48, 49, 72, 80, 81, 82, 100, 101, 102, 104, 105, 112, 113, 162]
   }
 }
 ```
@@ -246,15 +275,27 @@ docker compose run --rm backend python manage.py import_questions
 
 Expected result for Economics and Industrial Engineering:
 
+- the old 190-question base is removed and replaced (`metadata.replace_subject = true`);
 - subject name: `Economics and Industrial Engineering`;
 - subject slug: `economics-and-industrial-engineering`;
-- theory questions: `190`;
-- live coding tasks: `0`;
+- theory questions: **`163`** (exactly, no duplicates on repeated import);
+- live coding tasks: `0` (untouched if empty);
 - every question has exactly four answer variants and exactly one correct answer;
-- topics are created from `topic`;
-- `hash` and per-question `source_file` are read from JSON when present;
-- repeated imports update existing JSON questions by stable hash instead of creating duplicates;
-- if an older local import used the folder slug/hash strategy, the importer normalizes it to the JSON slug/hash and keeps existing question/answer records where possible.
+- topics are created from `topic` + `subtopic`;
+- visual questions store the `image` path and the file exists under `images/`;
+- visual image files contain only the visual material, not answer options or correct answers;
+- `explanation` is imported for every question and `formula` for calculation questions;
+- explanations and formulas are revealed **only after** the user answers (never before).
+
+Images are served by the backend at:
+
+```text
+GET /api/question-images/<path>
+# e.g. GET /api/question-images/Economics_and_Industrial_Engineering/images/EIE-Q0044.png
+```
+
+The serializers return a ready-to-use absolute `image` URL, so React can show diagrams in the
+test, the result page, and the mistakes review without extra configuration.
 
 ## Topics
 
@@ -329,6 +370,10 @@ Subjects:
 
 - `GET /api/subjects/`
 - `GET /api/subjects/:id/`
+
+Question images (public, no auth, used by `<img>` tags):
+
+- `GET /api/question-images/<path>`
 
 Tests:
 
@@ -418,7 +463,8 @@ Covered areas:
 
 - tagged question parsing;
 - JSON import for theory questions, topics, answer variants, and live coding tasks;
-- Economics and Industrial Engineering JSON import with 190 questions, topic binding, stable hashes, and repeat-safe updates;
+- Economics and Industrial Engineering JSON import with 163 questions, image/explanation/formula fields, `replace_subject` cleanup of the old 190-question base, topic binding, stable hashes, and repeat-safe updates;
+- visual questions expose image URLs in the API, with explanations/formulas revealed only after answering;
 - duplicate-stable hashing;
 - duplicate-safe import across multiple PDF files and repeated runs;
 - weighted question selection modes;

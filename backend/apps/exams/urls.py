@@ -6,6 +6,7 @@ from .views import (
     ImportQuestionsView,
     ImportStatusView,
     LeaderboardView,
+    QuestionImageView,
     LiveCodingMistakesView,
     LiveCodingResultView,
     LiveCodingSessionDetailView,
@@ -33,6 +34,7 @@ from .views import (
 
 urlpatterns = [
     path("health/", HealthView.as_view(), name="health"),
+    path("question-images/<path:image_path>", QuestionImageView.as_view(), name="question-image"),
     path("auth/register/", RegisterView.as_view(), name="auth-register"),
     path("auth/login/", LoginView.as_view(), name="auth-login"),
     path("auth/refresh/", TokenRefreshView.as_view(), name="auth-refresh"),

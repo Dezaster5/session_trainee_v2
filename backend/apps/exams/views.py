@@ -1,7 +1,10 @@
+import mimetypes
 from datetime import timedelta
+from pathlib import Path
 
 from django.conf import settings
 from django.db.models import Case, Count, ExpressionWrapper, F, FloatField, Q, Sum, Value, When
+from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, permissions, status
@@ -63,6 +66,36 @@ class HealthView(APIView):
 
     def get(self, request):
         return Response({"status": "ok"})
+
+
+class QuestionImageView(APIView):
+    """Serve question diagram images stored under ``BASE_QUESTIONS_DIR``.
+
+    Images are referenced by `<img>` tags that cannot attach a JWT, so this endpoint is
+    intentionally public. The requested path is confined to the base questions directory
+    to prevent directory traversal.
+    """
+
+    authentication_classes = []
+    permission_classes = [permissions.AllowAny]
+    allowed_suffixes = {".gif", ".jpeg", ".jpg", ".png", ".webp"}
+
+    def get(self, request, image_path):
+        base = Path(settings.BASE_QUESTIONS_DIR).resolve()
+        target = (base / image_path).resolve()
+        try:
+            target.relative_to(base)
+        except ValueError as exc:
+            raise Http404("Invalid image path") from exc
+        if target.suffix.lower() not in self.allowed_suffixes:
+            raise Http404("Unsupported image type")
+        if not target.is_file():
+            raise Http404("Image not found")
+
+        content_type, _ = mimetypes.guess_type(str(target))
+        response = FileResponse(target.open("rb"), content_type=content_type or "application/octet-stream")
+        response["Cache-Control"] = "public, max-age=86400"
+        return response
 
 
 class RegisterView(generics.CreateAPIView):
@@ -258,8 +291,8 @@ class ProgressSummaryView(APIView):
                 "totals": totals,
                 "subjects": subject_rows,
                 "last_subject": SubjectSerializer(last_session.subject).data if last_session else None,
-                "top_hard_questions": MistakeSerializer(top_hard, many=True).data,
-                "today_better_repeat": MistakeSerializer(due_questions, many=True).data,
+                "top_hard_questions": MistakeSerializer(top_hard, many=True, context={"request": request}).data,
+                "today_better_repeat": MistakeSerializer(due_questions, many=True, context={"request": request}).data,
                 "live_coding_weak_tasks": LiveCodingWeakTaskSerializer(live_weak_tasks, many=True, context={"request": request}).data,
                 "activity": [
                     {
@@ -352,7 +385,7 @@ class MarkQuestionMasteredView(APIView):
         progress.is_mastered = True
         progress.personal_weight = min(progress.personal_weight, 0.35)
         progress.save(update_fields=["is_mastered", "personal_weight", "updated_at"])
-        return Response(MistakeSerializer(progress).data)
+        return Response(MistakeSerializer(progress, context={"request": request}).data)
 
 
 class LeaderboardView(APIView):

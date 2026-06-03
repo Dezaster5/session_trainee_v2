@@ -1862,3 +1862,101 @@ input {
     min-height: 44px;
   }
 }
+
+/* Visual questions: image + explanation + formula blocks */
+.question-image {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+}
+
+.question-image img {
+  display: block;
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 8px;
+  object-fit: contain;
+}
+
+.result-item .question-image,
+.mistake-card .question-image {
+  justify-content: flex-start;
+}
+
+.result-item .question-image img,
+.mistake-card .question-image img {
+  max-width: 360px;
+  margin: 6px 0;
+}
+
+.answer-review {
+  display: grid;
+  gap: 12px;
+}
+
+.explanation-block,
+.formula-block {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+.explanation-block {
+  background: var(--blue-soft);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.formula-block {
+  background: var(--amber-soft);
+  border-color: rgba(183, 121, 31, 0.3);
+}
+
+.review-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.explanation-block p {
+  margin: 0;
+  line-height: 1.5;
+  color: #324356;
+  overflow-wrap: anywhere;
+}
+
+.formula-block code {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  color: #5a4310;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.correct-answer-line {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .question-image img {
+    max-width: 100%;
+    padding: 6px;
+  }
+
+  .result-item .question-image img,
+  .mistake-card .question-image img {
+    max-width: 100%;
+  }
+}

@@ -69,6 +69,8 @@ class Question(models.Model):
     text = models.TextField()
     difficulty = models.CharField(max_length=80, null=True, blank=True)
     explanation = models.TextField(null=True, blank=True)
+    formula = models.TextField(null=True, blank=True)
+    image = models.CharField(max_length=500, null=True, blank=True)
     import_format = models.CharField(max_length=32, choices=FORMAT_CHOICES, default=FORMAT_PDF)
     source_file = models.CharField(max_length=500)
     hash = models.CharField(max_length=64, unique=True, db_index=True)

@@ -1,0 +1,277 @@
+Ты senior fullstack-разработчик. Нужно обновить базу предмета Economics and Industrial Engineering в существующем проекте:
+
+Repository:
+https://github.com/Dezaster5/session_trainee_v2
+
+ВАЖНО:
+Ранее была добавлена база Economics and Industrial Engineering на 190 вопросов. Ее нужно убрать/заменить полностью.
+Вместо нее нужно использовать новую базу на 163 вопроса.
+
+Новый файл:
+base/Economics_and_Industrial_Engineering/economics_industrial_engineering_163_questions.json
+
+Также рядом должна быть папка с картинками:
+base/Economics_and_Industrial_Engineering/images/
+
+В JSON у визуальных вопросов поле image содержит относительный путь, например:
+images/EIE-Q0044.png
+
+Нужно сделать так, чтобы проект импортировал новую базу и корректно показывал картинки в тестах.
+
+---
+
+## 1. Удалить старые 190 вопросов
+
+Нужно удалить/деактивировать ранее импортированную базу Economics and Industrial Engineering на 190 вопросов.
+
+Важно:
+- не трогать Machine_learning
+- не трогать Web_component_development
+- не трогать Sociology
+- удалить только старые вопросы предмета Economics and Industrial Engineering
+- если subject уже существует, оставить subject, но заменить его questions
+- если есть старые hashes от 190 вопросов, они больше не должны использоваться
+- после импорта должно быть ровно 163 questions по этому предмету
+
+Лучший вариант:
+- добавить в importer режим replace_subject=true для JSON, если в metadata или filename указано, что база заменяет старую
+- перед импортом удалить старые Question/AnswerVariant этого subject
+- также аккуратно удалить связанные TestSessionQuestion/TestAnswer/UserQuestionProgress/UserSubjectStats по этому subject, если они мешают корректной статистике
+- если есть live coding для этого subject, не трогать, если liveCoding пустой
+
+---
+
+## 2. Импорт новой JSON-базы
+
+JSON имеет структуру:
+
+{
+  "subject": "Economics and Industrial Engineering",
+  "slug": "economics-and-industrial-engineering",
+  "questions": [
+    {
+      "id": "EIE-Q0001",
+      "source_number": 1,
+      "topic": "...",
+      "subtopic": "...",
+      "question": "...",
+      "type": "multiple_choice",
+      "options": [
+        {
+          "id": "A",
+          "text": "...",
+          "is_correct": true
+        }
+      ],
+      "correct_option_id": "A",
+      "correct_answer": "...",
+      "explanation": "...",
+      "formula": "...",
+      "image": null,
+      "source_file": "Economics_Question_Bank_163(1).pdf",
+      "hash": "..."
+    }
+  ],
+  "liveCoding": [],
+  "metadata": {
+    "total_questions": 163,
+    "visual_question_numbers": [...]
+  }
+}
+
+Нужно:
+- создать/найти Subject: Economics and Industrial Engineering
+- импортировать ровно 163 вопроса
+- создать AnswerVariant для каждого варианта
+- правильный ответ брать из is_correct=true
+- сохранить explanation
+- сохранить formula
+- сохранить image path
+- создать topics/subtopics, если в проекте уже есть Topic model
+- если Topic model нет, добавить поля topic/subtopic/image/explanation/formula в Question или отдельную модель QuestionExtraData
+
+---
+
+## 3. Поддержка картинок
+
+Для вопросов с image не null нужно:
+
+Backend:
+- хранить image path в базе
+- отдавать image URL в API
+- endpoint должен отдавать путь, который frontend сможет открыть
+- настроить serving media/static для base images в dev/docker
+
+Frontend:
+- в TestSession показывать картинку перед вариантами ответа
+- в TestResult тоже показывать картинку
+- в Mistakes показывать картинку для визуальных вопросов
+- если image=null, ничего не показывать
+- картинка должна быть адаптивной, не вылезать за экран
+- для мобильной версии width: 100%, max-width нормальный
+
+Путь:
+base/Economics_and_Industrial_Engineering/images/EIE-Q0044.png
+
+Можно реализовать через MEDIA_URL или отдельный endpoint:
+GET /api/question-images/<path>
+
+Главное — чтобы React реально показывал изображения.
+
+---
+
+## 4. Пояснения и формулы
+
+В JSON есть:
+- explanation
+- formula
+
+Нужно добавить их в API и frontend.
+
+После ответа пользователь должен видеть:
+- correct answer
+- explanation
+- formula, если есть
+- image, если есть
+
+В TestResult:
+- показать explanation по каждому вопросу
+- показать formula отдельным блоком, если поле не пустое
+
+В Mistakes:
+- показать explanation/formula, чтобы студент мог разбирать ошибки
+
+---
+
+## 5. Валидация
+
+После импорта проверить:
+
+- Subject Economics and Industrial Engineering существует
+- questions count = 163
+- у каждого question ровно 4 options
+- у каждого question ровно 1 correct option
+- visual questions имеют image path
+- файлы картинок физически существуют
+- explanation заполнен у каждого вопроса
+- formula заполнена у расчетных вопросов
+- повторный импорт не создает дубли
+
+---
+
+## 6. API
+
+Обновить serializers:
+
+QuestionForTestSerializer:
+- добавить image
+- добавить explanation только после ответа, не до ответа
+- добавить formula только после ответа, не до ответа
+
+QuestionWithAnswersSerializer:
+- добавить image
+- добавить explanation
+- добавить formula
+
+TestAnswerResultSerializer:
+- добавить explanation
+- добавить formula
+- добавить image
+
+TestResultSerializer:
+- возвращать explanation/formula/image внутри answers
+
+Важно:
+До ответа нельзя заранее показывать правильный ответ и explanation.
+
+---
+
+## 7. Frontend
+
+Обновить:
+
+TestSession.jsx:
+- показывать image у current_question, если есть
+- после ответа показывать:
+  - correct answer
+  - explanation
+  - formula
+
+TestResult.jsx:
+- показывать image/explanation/formula
+
+Mistakes.jsx:
+- показывать image/explanation/formula
+
+SubjectDetail.jsx:
+- отображать, что у предмета 163 questions
+
+Subjects.jsx:
+- предмет должен быть виден без ошибок
+
+---
+
+## 8. README
+
+Обновить README:
+
+Добавить раздел:
+
+### Economics and Industrial Engineering 163-question base
+
+Указать:
+- старые 190 вопросов заменены новой базой
+- путь:
+  base/Economics_and_Industrial_Engineering/economics_industrial_engineering_163_questions.json
+- картинки:
+  base/Economics_and_Industrial_Engineering/images/
+- команда импорта:
+  docker compose run --rm backend python manage.py import_questions
+- после импорта должно быть 163 вопроса
+- visual questions используют поле image
+- explanations/formulas импортируются и показываются после ответа
+
+---
+
+## 9. Tests
+
+Добавить тесты:
+
+1. JSON importer:
+- imports 163 questions
+- replaces old 190-question base
+- does not duplicate on repeated import
+- imports image paths
+- imports explanation
+- imports formula
+
+2. Visual questions:
+- question 44 has image
+- question 80 has formula
+- question 113 has formula
+- question 162 has image
+
+3. API:
+- current_question includes image if image exists
+- answer result includes explanation/formula/image
+- result page data includes explanation/formula/image
+
+4. Frontend:
+- visual questions render image
+- explanations render after answer
+- formula block renders only if formula exists
+
+---
+
+## 10. Final report
+
+После выполнения выведи:
+
+1. Какие файлы изменены
+2. Как удалены старые 190 вопросов
+3. Куда добавлена новая база
+4. Сколько вопросов импортировано
+5. Как работают картинки
+6. Как показываются explanations/formulas
+7. Как проверить через API
+8. Какие тесты добавлены

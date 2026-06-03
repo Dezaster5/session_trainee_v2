@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../api/client";
 import LoadingState from "../components/LoadingState";
 import ProgressBar from "../components/ProgressBar";
+import { AnswerExplanation, QuestionImage } from "../components/QuestionMedia";
 
 export default function TestSession() {
   const { id } = useParams();
@@ -111,6 +112,7 @@ export default function TestSession() {
 
       <section className="question-panel">
         <h2>{question.text}</h2>
+        <QuestionImage src={question.image} />
         <div className="answers-list">
           {question.variants.map((variant) => {
             const letter = String.fromCharCode(65 + question.variants.findIndex((item) => item.id === variant.id));
@@ -145,19 +147,27 @@ export default function TestSession() {
       </section>
 
       {feedback ? (
-        <section className={feedback.is_correct ? "feedback correct" : "feedback wrong"}>
-          <div>
-            <strong>{feedback.is_correct ? "Правильно" : "Неправильно"}</strong>
-            <span>
-              {feedback.points_awarded >= 0 ? "+" : ""}
-              {feedback.points_awarded} очков · встречалось {feedback.question_stats?.times_seen || 0} раз
-            </span>
-          </div>
-          <button type="button" className="primary-button" onClick={continueTest}>
-            {pendingSession?.current_question ? "Следующий" : "Результат"}
-            <ArrowRight size={18} />
-          </button>
-        </section>
+        <>
+          <section className={feedback.is_correct ? "feedback correct" : "feedback wrong"}>
+            <div>
+              <strong>{feedback.is_correct ? "Правильно" : "Неправильно"}</strong>
+              <span>
+                {feedback.points_awarded >= 0 ? "+" : ""}
+                {feedback.points_awarded} очков · встречалось {feedback.question_stats?.times_seen || 0} раз
+              </span>
+            </div>
+            <button type="button" className="primary-button" onClick={continueTest}>
+              {pendingSession?.current_question ? "Следующий" : "Результат"}
+              <ArrowRight size={18} />
+            </button>
+          </section>
+          {feedback.correct_variant ? (
+            <p className="correct-answer-line">
+              Правильный ответ: <strong>{feedback.correct_variant.text}</strong>
+            </p>
+          ) : null}
+          <AnswerExplanation explanation={feedback.explanation} formula={feedback.formula} />
+        </>
       ) : null}
     </div>
   );

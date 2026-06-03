@@ -6,6 +6,7 @@ import api from "../api/client";
 import EmptyState from "../components/EmptyState";
 import ErrorState from "../components/ErrorState";
 import LoadingState from "../components/LoadingState";
+import { AnswerExplanation, QuestionImage } from "../components/QuestionMedia";
 import { formatDate, formatPercent } from "../utils/format";
 
 export default function Mistakes() {
@@ -138,6 +139,11 @@ export default function Mistakes() {
                 {item.is_mastered ? <b>Усвоен</b> : null}
               </div>
               <h2>{item.question.text}</h2>
+              <QuestionImage src={item.question.image} />
+              <AnswerExplanation
+                explanation={item.question.explanation}
+                formula={item.question.formula}
+              />
               <div className="mistake-meta">
                 <span>Ошибки: {item.times_wrong}</span>
                 <span>Winrate: {formatPercent(item.personal_winrate)}</span>

@@ -9,7 +9,16 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.utils.text import slugify
 
-from .models import AnswerVariant, ImportRun, LiveCodingTask, Question, Subject, Topic
+from .models import (
+    AnswerVariant,
+    ImportRun,
+    LiveCodingTask,
+    Question,
+    Subject,
+    TestSession,
+    Topic,
+    UserSubjectStats,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -115,6 +124,28 @@ def source_relative_path(path, base_path=None):
         return str(path.relative_to(base_path)) if base_path else str(path)
     except ValueError:
         return str(path)
+
+
+def resolve_image_path(image, json_path, base_path=None):
+    """Normalize a per-question image reference to a path relative to the base dir.
+
+    JSON stores image paths relative to the subject folder (e.g. ``images/EIE-Q0044.png``).
+    We persist the path relative to ``BASE_QUESTIONS_DIR`` (e.g.
+    ``Economics_and_Industrial_Engineering/images/EIE-Q0044.png``) so a single media
+    endpoint can serve every subject without extra lookups.
+    """
+    if not isinstance(image, str):
+        return None
+    cleaned = image.strip().replace("\\", "/").lstrip("/")
+    if not cleaned:
+        return None
+    candidate = Path(json_path).parent / cleaned
+    if base_path is not None:
+        try:
+            return candidate.relative_to(base_path).as_posix()
+        except ValueError:
+            return candidate.as_posix()
+    return candidate.as_posix()
 
 
 def extract_pdf_text(path):
@@ -271,6 +302,8 @@ def parse_json_questions(data):
                 "topic_title": topic_title_from_json(item),
                 "difficulty": normalize_text(item.get("difficulty") or ""),
                 "explanation": normalize_text(item.get("explanation") or item.get("correct_answer") or ""),
+                "formula": normalize_text(item.get("formula") or ""),
+                "image": item.get("image") if isinstance(item.get("image"), str) else "",
                 "source_file": normalize_text(item.get("source_file") or ""),
                 "hash": normalize_text(item.get("hash") or ""),
                 "raw": item,
@@ -445,7 +478,48 @@ def get_or_create_subject(subject_slug, subject_name, folder_slug, subject_dir):
     return subject
 
 
-def find_existing_question_for_json_update(subject, digest, parsed_question):
+def json_requests_subject_replace(data):
+    """Return True when a JSON base explicitly asks to replace the old subject base.
+
+    The new base sets ``metadata.replace_subject = true`` to signal that any older,
+    differently hashed questions for the same subject must be removed before import.
+    """
+    if not isinstance(data, dict):
+        return False
+    if parse_json_bool(data.get("replace_subject")):
+        return True
+    metadata = data.get("metadata")
+    if isinstance(metadata, dict):
+        if parse_json_bool(metadata.get("replace_subject")):
+            return True
+        if parse_json_bool(metadata.get("replaces_previous")):
+            return True
+    return False
+
+
+def prune_replaced_subject_questions(subject, keep_hashes):
+    """Remove stale questions of a subject that are not part of the incoming base.
+
+    Questions whose hash is in ``keep_hashes`` are preserved so repeated imports stay
+    idempotent and keep user progress attached. Only when something is actually removed
+    do we also clear now-inconsistent theory sessions and subject stats. Live coding data
+    is left untouched (the subject keeps its tasks if it has any).
+    """
+    stale = Question.objects.filter(subject=subject).exclude(hash__in=keep_hashes)
+    removed = stale.count()
+    if not removed:
+        return 0
+
+    # Deleting the questions cascades AnswerVariant, TestSessionQuestion, TestAnswer and
+    # UserQuestionProgress rows that referenced the removed (old) questions.
+    stale.delete()
+    TestSession.objects.filter(subject=subject).delete()
+    if not LiveCodingTask.objects.filter(subject=subject).exists():
+        UserSubjectStats.objects.filter(subject=subject).delete()
+    return removed
+
+
+def find_existing_question_for_json_update(subject, digest, parsed_question, incoming_hashes=None):
     existing = Question.objects.filter(hash=digest).first()
     if existing:
         return existing
@@ -453,11 +527,14 @@ def find_existing_question_for_json_update(subject, digest, parsed_question):
     # Legacy imports for JSON files used generated hashes before per-question
     # JSON hashes were supported. Match by subject and exact text so user
     # progress stays attached when the hash strategy is upgraded.
-    return Question.objects.filter(
+    queryset = Question.objects.filter(
         subject=subject,
         import_format=Question.FORMAT_JSON,
         text=normalize_text(parsed_question["text"]),
-    ).first()
+    )
+    if incoming_hashes:
+        queryset = queryset.exclude(hash__in=incoming_hashes)
+    return queryset.first()
 
 
 def item_source_file(parsed_item, fallback, use_item_source_file):
@@ -490,6 +567,20 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
         return
 
     source_file = source_relative_path(path, base_path)
+    incoming_question_hashes = set()
+    for parsed_question in parsed_questions:
+        if parsed_question.get("error"):
+            continue
+        is_valid, _reason = validate_question(parsed_question, exact_variant_count=4)
+        if not is_valid:
+            continue
+        keep_topic_slug = stable_slug(parsed_question["topic_title"])
+        incoming_question_hashes.add(json_question_hash(subject_slug, keep_topic_slug, parsed_question))
+
+    if json_requests_subject_replace(data) and subject is not None and not dry_run:
+        removed = prune_replaced_subject_questions(subject, incoming_question_hashes)
+        if removed:
+            logger.info("replace_subject: removed %s stale questions for %s", removed, subject.slug)
 
     for index, parsed_question in enumerate(parsed_questions, start=1):
         if parsed_question.get("error"):
@@ -507,6 +598,7 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
         topic_slug = stable_slug(topic_title)
         topic_orders.setdefault((Topic.TYPE_THEORY, topic_slug), len(topic_orders) + 1)
         digest = json_question_hash(subject_slug, topic_slug, parsed_question)
+        image_path = resolve_image_path(parsed_question.get("image"), path, base_path)
 
         if dry_run:
             if Question.objects.filter(hash=digest).exists():
@@ -524,13 +616,20 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
 
         try:
             with transaction.atomic():
-                existing = find_existing_question_for_json_update(subject, digest, parsed_question)
+                existing = find_existing_question_for_json_update(
+                    subject,
+                    digest,
+                    parsed_question,
+                    incoming_hashes=incoming_question_hashes,
+                )
                 if existing:
                     existing.subject = subject
                     existing.topic = topic
                     existing.text = normalize_text(parsed_question["text"])
                     existing.difficulty = parsed_question.get("difficulty") or None
                     existing.explanation = parsed_question.get("explanation") or None
+                    existing.formula = parsed_question.get("formula") or None
+                    existing.image = image_path
                     existing.import_format = Question.FORMAT_JSON
                     existing.source_file = item_source_file(parsed_question, source_file, use_item_source_file)
                     existing.hash = digest
@@ -541,6 +640,8 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
                             "text",
                             "difficulty",
                             "explanation",
+                            "formula",
+                            "image",
                             "import_format",
                             "source_file",
                             "hash",
@@ -556,6 +657,8 @@ def import_questions_from_json_file(path, subject, summary, base_path=None, dry_
                         text=normalize_text(parsed_question["text"]),
                         difficulty=parsed_question.get("difficulty") or None,
                         explanation=parsed_question.get("explanation") or None,
+                        formula=parsed_question.get("formula") or None,
+                        image=image_path,
                         import_format=Question.FORMAT_JSON,
                         source_file=item_source_file(parsed_question, source_file, use_item_source_file),
                         hash=digest,

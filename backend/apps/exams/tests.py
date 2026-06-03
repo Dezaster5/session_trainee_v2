@@ -40,6 +40,21 @@ from .services import calculate_points, create_test_session, record_answer, sele
 User = get_user_model()
 
 
+EIE_SUBJECT_DIR = "Economics_and_Industrial_Engineering"
+EIE_JSON_NAME = "economics_industrial_engineering_163_questions.json"
+
+
+def eie_source_path():
+    return settings.BASE_QUESTIONS_DIR / EIE_SUBJECT_DIR / EIE_JSON_NAME
+
+
+def write_eie_temp_base(tmp, payload):
+    subject_dir = Path(tmp) / EIE_SUBJECT_DIR
+    subject_dir.mkdir()
+    (subject_dir / EIE_JSON_NAME).write_text(json.dumps(payload), encoding="utf-8")
+    return subject_dir
+
+
 class ImportParserTests(TestCase):
     def test_parse_tagged_questions(self):
         raw = """
@@ -359,191 +374,136 @@ class JsonImportTests(TestCase):
         self.assertEqual(leaderboard.status_code, 200)
         self.assertIn("sociology-student", [row["username"] for row in leaderboard.data])
 
-    def test_imports_economics_industrial_engineering_json_fixture_without_duplicates(self):
-        source = settings.BASE_QUESTIONS_DIR / "Economics_and_Industrial_Engineering" / "economics_industrial_engineering_questions.json"
-        payload = json.loads(source.read_text(encoding="utf-8"))
+    def test_imports_economics_industrial_engineering_163_json_fixture_without_duplicates(self):
+        payload = json.loads(eie_source_path().read_text(encoding="utf-8"))
 
         with TemporaryDirectory() as tmp:
-            subject_dir = Path(tmp) / "Economics_and_Industrial_Engineering"
-            subject_dir.mkdir()
-            (subject_dir / "economics_industrial_engineering_questions.json").write_text(json.dumps(payload), encoding="utf-8")
-
+            write_eie_temp_base(tmp, payload)
             first = import_questions_from_base(tmp)
-            first_question_hash = payload["questions"][0]["hash"]
-            variant_ids_before = list(
-                Question.objects.get(hash=first_question_hash)
-                .variants.order_by("order")
-                .values_list("id", flat=True)
-            )
             second = import_questions_from_base(tmp)
 
         subject = Subject.objects.get(slug="economics-and-industrial-engineering")
         questions = Question.objects.filter(subject=subject).prefetch_related("variants")
-        expected_topics = {
-            "Module 1: Economics",
-            "Module 2: Industrial Engineering and Production",
-            "Module 3: Management and Digital Economy",
-            "Test Questions on Economics",
-            "Test Questions on Macroeconomics",
-        }
 
         self.assertEqual(subject.name, "Economics and Industrial Engineering")
-        self.assertEqual(first.imported_questions, 190)
+        self.assertEqual(first.imported_questions, 163)
         self.assertEqual(first.imported_live_coding_tasks, 0)
         self.assertEqual(second.imported_questions, 0)
-        self.assertEqual(second.duplicate_questions, 190)
-        self.assertEqual(questions.count(), 190)
-        self.assertEqual(
-            set(Topic.objects.filter(subject=subject, type=Topic.TYPE_THEORY).values_list("title", flat=True)),
-            expected_topics,
-        )
+        self.assertEqual(second.duplicate_questions, 163)
+        self.assertEqual(questions.count(), 163)
+        self.assertEqual(payload["metadata"]["total_questions"], 163)
         self.assertFalse(LiveCodingTask.objects.filter(subject=subject).exists())
 
         for question in questions:
             self.assertEqual(question.import_format, Question.FORMAT_JSON)
             self.assertEqual(question.variants.count(), 4)
             self.assertEqual(question.variants.filter(is_correct=True).count(), 1)
+            self.assertTrue(question.explanation)
 
-        first_question = Question.objects.get(hash=first_question_hash)
-        variant_ids_after = list(first_question.variants.order_by("order").values_list("id", flat=True))
-        self.assertEqual(first_question.source_file, payload["questions"][0]["source_file"])
-        self.assertEqual(first_question.topic.title, "Module 1: Economics")
-        self.assertEqual(first_question.text, payload["questions"][0]["question"])
-        self.assertEqual(variant_ids_after, variant_ids_before)
+        first_question_payload = payload["questions"][0]
+        first_question = Question.objects.get(hash=first_question_payload["hash"])
+        self.assertEqual(first_question.source_file, first_question_payload["source_file"])
+        self.assertEqual(first_question.topic.title, "Basic Economics and GDP · Core concepts, GDP and macroeconomics")
+        self.assertEqual(first_question.text, first_question_payload["question"])
 
-    def test_economics_industrial_engineering_works_in_test_flow_and_leaderboard(self):
-        source = settings.BASE_QUESTIONS_DIR / "Economics_and_Industrial_Engineering" / "economics_industrial_engineering_questions.json"
-        payload = json.loads(source.read_text(encoding="utf-8"))
-
-        with TemporaryDirectory() as tmp:
-            subject_dir = Path(tmp) / "Economics_and_Industrial_Engineering"
-            subject_dir.mkdir()
-            (subject_dir / "economics_industrial_engineering_questions.json").write_text(json.dumps(payload), encoding="utf-8")
-            import_questions_from_base(tmp)
-
-        subject = Subject.objects.get(slug="economics-and-industrial-engineering")
-        topic = Topic.objects.get(subject=subject, title="Module 1: Economics")
-        user = User.objects.create_user(username="economics-student", password="strong-pass-123")
-        client = APIClient()
-        client.force_authenticate(user)
-
-        start = client.post(
-            "/api/tests/start/",
-            {
-                "subject_id": subject.id,
-                "mode": "review_all",
-                "question_count": "5",
-                "topic_ids": [topic.id],
-            },
-            format="json",
-        )
-
-        self.assertEqual(start.status_code, 201)
-        self.assertEqual(start.data["subject"]["id"], subject.id)
-        self.assertEqual(start.data["total_questions"], 5)
-        self.assertEqual(start.data["current_question"]["question"]["topic"]["id"], topic.id)
-
-        subjects = client.get("/api/subjects/")
-        self.assertEqual(subjects.status_code, 200)
-        self.assertTrue(any(row["id"] == subject.id for row in subjects.data))
-
-        question_id = start.data["current_question"]["question"]["id"]
-        correct_variant = AnswerVariant.objects.get(question_id=question_id, is_correct=True)
-        answer = client.post(
-            f"/api/tests/{start.data['id']}/answer/",
-            {"question_id": question_id, "selected_variant_id": correct_variant.id, "time_spent": 10},
-            format="json",
-        )
-        result = client.get(f"/api/tests/{start.data['id']}/result/")
-        summary = client.get("/api/progress/summary/")
-        leaderboard = client.get("/api/leaderboard/")
-
-        self.assertEqual(answer.status_code, 200)
-        self.assertTrue(answer.data["answer"]["is_correct"])
-        self.assertEqual(result.status_code, 200)
-        self.assertEqual(result.data["subject"], subject.id)
-        self.assertTrue(any(variant["is_correct"] for variant in result.data["answers"][0]["question"]["variants"]))
-        self.assertEqual(UserQuestionProgress.objects.get(user=user, question_id=question_id).times_correct, 1)
-        self.assertEqual(UserSubjectStats.objects.get(user=user, subject=subject).correct_answers, 1)
-        self.assertEqual(summary.status_code, 200)
-        self.assertTrue(any(row["subject_id"] == subject.id for row in summary.data["subjects"]))
-        self.assertEqual(leaderboard.status_code, 200)
-        self.assertIn("economics-student", [row["username"] for row in leaderboard.data])
-
-        mistake_start = client.post(
-            "/api/tests/start/",
-            {
-                "subject_id": subject.id,
-                "mode": "review_all",
-                "question_count": "1",
-                "topic_ids": [topic.id],
-            },
-            format="json",
-        )
-        mistake_question_id = mistake_start.data["current_question"]["question"]["id"]
-        wrong_variant = AnswerVariant.objects.filter(question_id=mistake_question_id, is_correct=False).first()
-        mistake_answer = client.post(
-            f"/api/tests/{mistake_start.data['id']}/answer/",
-            {"question_id": mistake_question_id, "selected_variant_id": wrong_variant.id, "time_spent": 8},
-            format="json",
-        )
-        mistakes = client.get(f"/api/progress/mistakes/?subject={subject.id}")
-
-        self.assertEqual(mistake_answer.status_code, 200)
-        self.assertFalse(mistake_answer.data["answer"]["is_correct"])
-        self.assertEqual(mistakes.status_code, 200)
-        self.assertTrue(any(item["question"]["id"] == mistake_question_id for item in mistakes.data))
-
-    def test_economics_import_reuses_legacy_folder_slug_subject_and_question(self):
-        source = settings.BASE_QUESTIONS_DIR / "Economics_and_Industrial_Engineering" / "economics_industrial_engineering_questions.json"
-        question_payload = json.loads(source.read_text(encoding="utf-8"))["questions"][0]
-        payload = {
-            "subject": "Economics and Industrial Engineering",
-            "slug": "economics-and-industrial-engineering",
-            "questions": [question_payload],
-            "liveCoding": [],
-        }
-        legacy_subject = Subject.objects.create(
-            name="Economics And Industrial Engineering",
-            slug="economics_and_industrial_engineering",
-        )
-        legacy_question = Question.objects.create(
-            subject=legacy_subject,
-            text=question_payload["question"],
-            import_format=Question.FORMAT_JSON,
-            source_file="Economics_and_Industrial_Engineering/economics_industrial_engineering_questions.json",
-            hash="legacy-eie-hash",
-        )
-        variant_ids_before = []
-        for order, option in enumerate(question_payload["options"]):
-            variant = AnswerVariant.objects.create(
-                question=legacy_question,
-                text=option["text"],
-                is_correct=option["is_correct"],
-                order=order,
+    def test_economics_replace_subject_removes_old_190_question_base(self):
+        payload = json.loads(eie_source_path().read_text(encoding="utf-8"))
+        subject = Subject.objects.create(name="Economics and Industrial Engineering", slug="economics-and-industrial-engineering")
+        user = User.objects.create_user(username="old-eie-student", password="strong-pass-123")
+        old_question_ids = []
+        for index in range(190):
+            question = Question.objects.create(
+                subject=subject,
+                text=f"Old EIE question {index}",
+                import_format=Question.FORMAT_JSON,
+                source_file="old-eie-190.json",
+                hash=f"old-eie-hash-{index}",
             )
-            variant_ids_before.append(variant.id)
+            AnswerVariant.objects.create(question=question, text="Right", is_correct=True, order=0)
+            AnswerVariant.objects.create(question=question, text="Wrong", is_correct=False, order=1)
+            old_question_ids.append(question.id)
+        session = TestSession.objects.create(user=user, subject=subject, total_questions=1)
+        TestSessionQuestion.objects.create(session=session, question_id=old_question_ids[0], order=1)
+        UserQuestionProgress.objects.create(user=user, question_id=old_question_ids[0], times_seen=1)
+        UserSubjectStats.objects.create(user=user, subject=subject, unique_questions_seen=1)
 
         with TemporaryDirectory() as tmp:
-            subject_dir = Path(tmp) / "Economics_and_Industrial_Engineering"
-            subject_dir.mkdir()
-            (subject_dir / "economics_industrial_engineering_questions.json").write_text(json.dumps(payload), encoding="utf-8")
-
+            write_eie_temp_base(tmp, payload)
             summary = import_questions_from_base(tmp)
 
-        subject = Subject.objects.get()
-        question = Question.objects.get()
+        subject.refresh_from_db()
+        questions = Question.objects.filter(subject=subject)
 
-        self.assertEqual(summary.imported_questions, 0)
-        self.assertEqual(summary.duplicate_questions, 1)
-        self.assertEqual(subject.slug, "economics-and-industrial-engineering")
-        self.assertEqual(subject.name, "Economics and Industrial Engineering")
-        self.assertEqual(question.subject, subject)
-        self.assertEqual(question.hash, question_payload["hash"])
-        self.assertEqual(
-            list(question.variants.order_by("order").values_list("id", flat=True)),
-            variant_ids_before,
-        )
+        self.assertEqual(summary.imported_questions, 163)
+        self.assertEqual(questions.count(), 163)
+        self.assertFalse(Question.objects.filter(id__in=old_question_ids).exists())
+        self.assertFalse(TestSession.objects.filter(subject=subject).exists())
+        self.assertFalse(UserSubjectStats.objects.filter(subject=subject).exists())
+
+    def test_economics_imports_visual_question_images_explanations_and_formulas(self):
+        payload = json.loads(eie_source_path().read_text(encoding="utf-8"))
+
+        with TemporaryDirectory() as tmp:
+            subject_dir = write_eie_temp_base(tmp, payload)
+            images_dir = subject_dir / "images"
+            images_dir.mkdir()
+            for item in payload["questions"]:
+                if item.get("image"):
+                    (subject_dir / item["image"]).write_bytes(b"fake-png")
+            summary = import_questions_from_base(tmp)
+
+        self.assertEqual(summary.imported_questions, 163)
+
+        q44 = Question.objects.get(hash=payload["questions"][43]["hash"])
+        q80 = Question.objects.get(hash=payload["questions"][79]["hash"])
+        q113 = Question.objects.get(hash=payload["questions"][112]["hash"])
+        q162 = Question.objects.get(hash=payload["questions"][161]["hash"])
+
+        self.assertEqual(q44.image, "Economics_and_Industrial_Engineering/images/EIE-Q0044.png")
+        self.assertTrue(q44.explanation)
+        self.assertIn("MC", q80.formula)
+        self.assertIn("Profit", q113.formula)
+        self.assertEqual(q162.image, "Economics_and_Industrial_Engineering/images/EIE-Q0162.png")
+
+    def test_economics_visual_question_api_exposes_post_answer_review_fields(self):
+        payload = json.loads(eie_source_path().read_text(encoding="utf-8"))
+
+        with TemporaryDirectory() as tmp:
+            subject_dir = write_eie_temp_base(tmp, payload)
+            images_dir = subject_dir / "images"
+            images_dir.mkdir()
+            (images_dir / "EIE-Q0044.png").write_bytes(b"fake-png")
+            import_questions_from_base(tmp)
+
+            subject = Subject.objects.get(slug="economics-and-industrial-engineering")
+            question = Question.objects.get(hash=payload["questions"][43]["hash"])
+            user = User.objects.create_user(username="economics-student", password="strong-pass-123")
+            client = APIClient()
+            client.force_authenticate(user)
+            session = TestSession.objects.create(user=user, subject=subject, total_questions=1)
+            TestSessionQuestion.objects.create(session=session, question=question, order=1)
+
+            state = client.get(f"/api/tests/{session.id}/")
+            current_question = state.data["current_question"]["question"]
+            correct_variant = question.variants.get(is_correct=True)
+            answer = client.post(
+                f"/api/tests/{session.id}/answer/",
+                {"question_id": question.id, "selected_variant_id": correct_variant.id, "time_spent": 10},
+                format="json",
+            )
+            result = client.get(f"/api/tests/{session.id}/result/")
+
+        self.assertEqual(state.status_code, 200)
+        self.assertIn("/api/question-images/Economics_and_Industrial_Engineering/images/EIE-Q0044.png", current_question["image"])
+        self.assertNotIn("explanation", current_question)
+        self.assertNotIn("formula", current_question)
+        self.assertEqual(answer.status_code, 200)
+        self.assertEqual(answer.data["answer"]["explanation"], question.explanation)
+        self.assertIsNone(answer.data["answer"]["formula"])
+        self.assertIn("/api/question-images/Economics_and_Industrial_Engineering/images/EIE-Q0044.png", answer.data["answer"]["image"])
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.data["answers"][0]["question"]["explanation"], question.explanation)
+        self.assertIn("/api/question-images/Economics_and_Industrial_Engineering/images/EIE-Q0044.png", result.data["answers"][0]["question"]["image"])
 
     def test_json_import_rejects_questions_without_four_variants(self):
         payload = {
@@ -1007,6 +967,26 @@ class ApiEdgeCaseTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("No questions available", response.data["detail"])
+
+    def test_question_image_endpoint_serves_only_images_inside_base_dir(self):
+        with TemporaryDirectory() as tmp:
+            base_dir = Path(tmp)
+            image_dir = base_dir / "Economics_and_Industrial_Engineering" / "images"
+            image_dir.mkdir(parents=True)
+            (image_dir / "EIE-Q0044.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+            (base_dir / "secret.json").write_text('{"answers": true}', encoding="utf-8")
+            outside = base_dir.parent / "outside.png"
+            outside.write_bytes(b"\x89PNG\r\n\x1a\n")
+
+            with self.settings(BASE_QUESTIONS_DIR=base_dir):
+                image = self.client.get("/api/question-images/Economics_and_Industrial_Engineering/images/EIE-Q0044.png")
+                non_image = self.client.get("/api/question-images/secret.json")
+                traversal = self.client.get("/api/question-images/../outside.png")
+
+        self.assertEqual(image.status_code, 200)
+        self.assertEqual(image["Content-Type"], "image/png")
+        self.assertEqual(non_image.status_code, 404)
+        self.assertEqual(traversal.status_code, 404)
 
     def test_live_coding_api_start_submit_and_mistakes(self):
         topic = Topic.objects.create(

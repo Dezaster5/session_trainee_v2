@@ -27,6 +27,22 @@ from .services import get_next_question
 User = get_user_model()
 
 
+def build_question_image_url(question, context):
+    """Build an absolute URL the frontend can load directly in an `<img>` tag.
+
+    Falls back to a root-relative path when no request is available in the serializer
+    context (e.g. when serializing outside the request/response cycle).
+    """
+    image = getattr(question, "image", None)
+    if not image:
+        return None
+    relative = f"/api/question-images/{str(image).lstrip('/')}"
+    request = context.get("request") if context else None
+    if request is not None:
+        return request.build_absolute_uri(relative)
+    return relative
+
+
 def shuffled_answer_variants(question, session_id, question_order):
     variants = list(question.variants.all())
     original_ids = [variant.id for variant in variants]
@@ -165,19 +181,35 @@ class AnswerVariantSerializer(serializers.ModelSerializer):
 class QuestionForTestSerializer(serializers.ModelSerializer):
     variants = PublicAnswerVariantSerializer(many=True, read_only=True)
     topic = TopicMiniSerializer(read_only=True)
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ("id", "text", "topic", "difficulty", "variants")
+        fields = ("id", "text", "topic", "difficulty", "variants", "image")
+
+    def get_image(self, obj):
+        return build_question_image_url(obj, self.context)
+
+
+class QuestionReviewSerializer(QuestionForTestSerializer):
+    """Question payload for review screens (mistakes), where revealing the
+    explanation and formula is expected because the question was already answered."""
+
+    class Meta(QuestionForTestSerializer.Meta):
+        fields = QuestionForTestSerializer.Meta.fields + ("explanation", "formula")
 
 
 class QuestionWithAnswersSerializer(serializers.ModelSerializer):
     variants = AnswerVariantSerializer(many=True, read_only=True)
     topic = TopicMiniSerializer(read_only=True)
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ("id", "text", "topic", "difficulty", "explanation", "variants", "source_file")
+        fields = ("id", "text", "topic", "difficulty", "explanation", "formula", "variants", "source_file", "image")
+
+    def get_image(self, obj):
+        return build_question_image_url(obj, self.context)
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -337,6 +369,9 @@ class TestSessionStateSerializer(serializers.ModelSerializer):
                 "text": question.text,
                 "topic": TopicMiniSerializer(question.topic).data if question.topic else None,
                 "difficulty": question.difficulty,
+                # Image is part of the prompt for visual questions, so it is safe to show
+                # before answering. Explanation/formula are intentionally withheld here.
+                "image": build_question_image_url(question, self.context),
                 "variants": PublicAnswerVariantSerializer(
                     shuffled_answer_variants(question, obj.id, entry.order),
                     many=True,
@@ -349,6 +384,9 @@ class TestAnswerResultSerializer(serializers.ModelSerializer):
     correct_variant = serializers.SerializerMethodField()
     selected_variant = PublicAnswerVariantSerializer(read_only=True)
     question_stats = serializers.SerializerMethodField()
+    explanation = serializers.SerializerMethodField()
+    formula = serializers.SerializerMethodField()
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = TestAnswer
@@ -361,11 +399,23 @@ class TestAnswerResultSerializer(serializers.ModelSerializer):
             "answered_at",
             "correct_variant",
             "question_stats",
+            "explanation",
+            "formula",
+            "image",
         )
 
     def get_correct_variant(self, obj):
         variant = obj.question.variants.filter(is_correct=True).first()
         return AnswerVariantSerializer(variant).data if variant else None
+
+    def get_explanation(self, obj):
+        return obj.question.explanation or None
+
+    def get_formula(self, obj):
+        return obj.question.formula or None
+
+    def get_image(self, obj):
+        return build_question_image_url(obj.question, self.context)
 
     def get_question_stats(self, obj):
         progress = UserQuestionProgress.objects.filter(
@@ -453,7 +503,7 @@ class UserSubjectStatsSerializer(serializers.ModelSerializer):
 
 
 class MistakeSerializer(serializers.ModelSerializer):
-    question = QuestionForTestSerializer(read_only=True)
+    question = QuestionReviewSerializer(read_only=True)
     subject = serializers.CharField(source="question.subject.name", read_only=True)
     subject_id = serializers.IntegerField(source="question.subject_id", read_only=True)
     topic = TopicMiniSerializer(source="question.topic", read_only=True)

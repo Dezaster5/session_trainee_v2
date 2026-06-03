@@ -7,6 +7,7 @@ import EmptyState from "../components/EmptyState";
 import ErrorState from "../components/ErrorState";
 import LoadingState from "../components/LoadingState";
 import StatCard from "../components/StatCard";
+import { AnswerExplanation, QuestionImage } from "../components/QuestionMedia";
 import { formatPercent, modeLabel } from "../utils/format";
 
 export default function TestResult() {
@@ -67,8 +68,13 @@ export default function TestResult() {
                 <div className="result-index">{index + 1}</div>
                 <div>
                   <h3>{answer.question.text}</h3>
+                  <QuestionImage src={answer.question.image} />
                   <p>Ваш ответ: {answer.selected_variant?.text || "Нет ответа"}</p>
-                  {!answer.is_correct ? <p>Правильный ответ: {correct?.text}</p> : null}
+                  {correct ? <p>Правильный ответ: {correct.text}</p> : null}
+                  <AnswerExplanation
+                    explanation={answer.question.explanation}
+                    formula={answer.question.formula}
+                  />
                   <small>{answer.points_awarded} очков</small>
                 </div>
               </article>
