@@ -543,6 +543,23 @@ def item_source_file(parsed_item, fallback, use_item_source_file):
     return fallback
 
 
+def filter_json_files_for_replacement(json_files):
+    """Use only replacement JSON files when a subject folder contains them.
+
+    This prevents an old JSON base left on a server from being imported again after
+    the replacement file has pruned stale questions for the same subject.
+    """
+    replacement_files = []
+    for json_file in json_files:
+        try:
+            data = json.loads(Path(json_file).read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if json_requests_subject_replace(data):
+            replacement_files.append(json_file)
+    return replacement_files or json_files
+
+
 def import_questions_from_json_file(path, subject, summary, base_path=None, dry_run=False):
     path = Path(path)
     subject_slug = subject.slug if subject else stable_slug(path.parent.name)
@@ -757,7 +774,7 @@ def import_questions_from_base(base_dir, dry_run=False):
 
         for subject_dir in subject_dirs:
             pdf_files = sorted(subject_dir.glob("*.pdf"))
-            json_files = sorted(subject_dir.glob("*.json"))
+            json_files = filter_json_files_for_replacement(sorted(subject_dir.glob("*.json")))
             folder_slug = slugify(subject_dir.name) or subject_dir.name.lower().replace(" ", "-")
             folder_name = subject_name_from_dir(subject_dir.name)
             json_subject_name, json_subject_slug = subject_metadata_from_json_files(json_files)

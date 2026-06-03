@@ -6036,6 +6036,7 @@
   ],
   "liveCoding": [],
   "metadata": {
+    "replace_subject": true,
     "source": "Economics_Question_Bank_163(1).pdf",
     "notes": "Replaces the previously imported 190-question Economics and Industrial Engineering base. Questions/options are preserved from the PDF source. Visual questions include image file paths.",
     "visual_assets_note": "Visual assets in images/ use cropped originals from picture_for_questions/ when the matching appeal visual exists; missing visuals are generated in a matching educational style. Images include only diagrams, tables, and graphs, without selected answers, answer options, question text, or correct-answer text.",

@@ -92,6 +92,13 @@ AUTO_IMPORT_QUESTIONS=1
 
 After the first successful production import, set it back to `0` and redeploy. The import runs in the background on Render so the web service can bind to its port first.
 
+If the production Economics and Industrial Engineering subject shows **353**
+questions, the old 190-question base and the new 163-question base both exist in
+PostgreSQL. Deploy the latest code/base JSON, set `AUTO_IMPORT_QUESTIONS=1`,
+redeploy once, then set it back to `0`. The importer reads
+`metadata.replace_subject = true` and prunes stale Economics questions so the
+subject returns to exactly **163** questions.
+
 Dry run:
 
 ```bash

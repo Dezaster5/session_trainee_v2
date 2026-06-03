@@ -391,6 +391,7 @@ class JsonImportTests(TestCase):
         self.assertEqual(second.imported_questions, 0)
         self.assertEqual(second.duplicate_questions, 163)
         self.assertEqual(questions.count(), 163)
+        self.assertTrue(payload["metadata"]["replace_subject"])
         self.assertEqual(payload["metadata"]["total_questions"], 163)
         self.assertFalse(LiveCodingTask.objects.filter(subject=subject).exists())
 
@@ -439,6 +440,46 @@ class JsonImportTests(TestCase):
         self.assertFalse(Question.objects.filter(id__in=old_question_ids).exists())
         self.assertFalse(TestSession.objects.filter(subject=subject).exists())
         self.assertFalse(UserSubjectStats.objects.filter(subject=subject).exists())
+
+    def test_economics_replacement_json_ignores_stale_old_json_file(self):
+        payload = json.loads(eie_source_path().read_text(encoding="utf-8"))
+        old_payload = {
+            "subject": "Economics and Industrial Engineering",
+            "slug": "economics-and-industrial-engineering",
+            "questions": [
+                {
+                    "id": "OLD-EIE-Q0001",
+                    "topic": "Old EIE",
+                    "subtopic": "",
+                    "question": "Old 190-question base item that must not be reimported",
+                    "type": "multiple_choice",
+                    "options": [
+                        {"id": "A", "text": "Right", "is_correct": True},
+                        {"id": "B", "text": "Wrong 1", "is_correct": False},
+                        {"id": "C", "text": "Wrong 2", "is_correct": False},
+                        {"id": "D", "text": "Wrong 3", "is_correct": False},
+                    ],
+                    "correct_option_id": "A",
+                    "correct_answer": "Right",
+                    "hash": "old-eie-json-file-hash",
+                }
+            ],
+            "liveCoding": [],
+        }
+
+        with TemporaryDirectory() as tmp:
+            subject_dir = write_eie_temp_base(tmp, payload)
+            (subject_dir / "economics_industrial_engineering_questions.json").write_text(
+                json.dumps(old_payload),
+                encoding="utf-8",
+            )
+            summary = import_questions_from_base(tmp)
+
+        subject = Subject.objects.get(slug="economics-and-industrial-engineering")
+
+        self.assertEqual(summary.imported_questions, 163)
+        self.assertEqual(Question.objects.filter(subject=subject).count(), 163)
+        self.assertFalse(Question.objects.filter(hash="old-eie-json-file-hash").exists())
 
     def test_economics_imports_visual_question_images_explanations_and_formulas(self):
         payload = json.loads(eie_source_path().read_text(encoding="utf-8"))
